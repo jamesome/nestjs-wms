@@ -1,0 +1,77 @@
+stages:
+  - test
+  - build
+  - deploy
+
+.test:
+  stage: test
+  image: node:20.15.1
+  before_script:
+    - yarn install
+  rules:
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  tags:
+    - docker
+
+unit-test:
+  extends: .test
+  script:
+    - yarn run test:cov
+  coverage: /All files[^\|]*\|[^\|]*\s+([\d\.]+)/
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - junit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+
+lint-test:
+  extends: .test
+  script:
+    - yarn run lint
+
+build-staging:
+  stage: build
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - echo "[auth]" > .sentryclirc
+    - echo "token=$SENTRY_AUTH_TOKEN" >> .sentryclirc
+  script:
+    - echo "Compiling the code..."
+    - docker build --pull --cache-from $CI_REGISTRY_IMAGE/app:staging -t "$CI_REGISTRY_IMAGE/app:staging" .
+    - docker push "$CI_REGISTRY_IMAGE/app:staging"
+    - echo "Compile complete."
+  only:
+    refs:
+      - staging
+  tags:
+    - docker
+
+deploy-staging:
+  stage: deploy
+  environment: staging
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan 10.0.64.100 >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - echo "Deploying application..."
+    - ssh deployer@10.0.64.100 "cd ~/Sellmate/wms && 
+      git pull origin &&
+      docker login -u '$CI_REGISTRY_USER' -p '$CI_REGISTRY_PASSWORD' $CI_REGISTRY && 
+      docker compose -f docker-compose.yml -f docker-compose.staging.yml pull &&
+      docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d"
+    - echo "Application successfully deployed."
+  only:
+    refs:
+      - staging
+  tags:
+    - shell

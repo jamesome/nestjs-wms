@@ -1,0 +1,79 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "docker-build",
+			"label": "docker-build",
+			"platform": "node",
+			"dockerBuild": {
+				"dockerfile": "${workspaceFolder}/Dockerfile",
+				"context": "${workspaceFolder}",
+				"pull": true
+			}
+		},
+		{
+			"type": "docker-build",
+			"label": "docker-dev-build",
+			"platform": "node",
+			"dockerBuild": {
+				"dockerfile": "${workspaceFolder}/Dockerfile",
+				"context": "${workspaceFolder}",
+				"target": "development",
+				"pull": true
+			}
+		},
+		{
+			"type": "docker-run",
+			"label": "docker-run: release",
+			"dependsOn": [
+				"docker-build"
+			],
+			"platform": "node"
+		},
+		{
+			"type": "docker-run",
+			"label": "docker-run: debug",
+			"dependsOn": [
+				"docker-dev-build"
+			],
+			"platform": "node",
+			"dockerRun": {
+				"env": {
+					"DEBUG": "*",
+					"NODE_ENV": "development"
+				},
+				"volumes": [
+					{
+						"localPath": "./",
+						"containerPath": "/srv/app"
+					}
+				],
+				"ports": [
+					{
+						"containerPort": 3000,
+						"hostPort": 3000
+					}
+				],
+				"command": "yarn start:debug"
+			},
+			"node": {
+				"enableDebugging": true
+			}
+		},
+		{
+			"label": "docker compose debug",
+			"type": "docker-compose",
+			"dockerCompose": {
+				"up": {
+					"detached": false,
+					"build": true,
+					"services": ["app"]
+				},
+				"files": [
+					"${workspaceFolder}/docker-compose.yml",
+					"${workspaceFolder}/docker-compose.debug.yml"
+				]
+			}
+		}
+	]
+}

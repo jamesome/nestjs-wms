@@ -1,0 +1,25 @@
+services:
+  app:
+    container_name: sellmate_wms_app
+    build:
+      target: development
+    ports:
+      - '${APP_PORT:-3000}:${APP_PORT:-3000}'
+    volumes:
+      - './:/srv/app'
+
+  db-tenant:
+    image: mysql:8.0.38
+    container_name: sellmate_wms_db_tenant
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - '${HOST_DB_PORT:-3306}:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-Pa55w0rd}
+      MYSQL_DATABASE: ${DB_NAME:-wms}
+      MYSQL_USER: ${DB_USERNAME:-wms}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-Pa55w0rd}
+    volumes:
+      - ./db/mysql/data:/var/lib/mysql

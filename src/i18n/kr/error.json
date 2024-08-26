@@ -1,0 +1,27 @@
+{
+  "INTERNAL_SERVER_ERROR": "서버오류가 발생하였습니다.",
+  "LOT_ID_MISMATCH": "요청한 로트번호와 다른 로트번호를 가진 품목이 이미 존재합니다.",
+  "STATUS_MISMATCH": "요청한 재고 상태와 다른 재고 상태를 가진 품목이 이미 존재합니다.",
+  "ENTITY_NOT_FOUND": "데이터가 존재하지 않습니다.",
+  "CANNOT_DELETE_DUE_TO_DEFAULT_VALUE": "기본값으로 지정된 데이터는 삭제가 불가능합니다.",
+  "CANNOT_DELETE_DUE_TO_ASSOCIATED_ITEMS": "재고가 존재합니다. 재고를 보유한 보관장소는 삭제할 수 없습니다.",
+  "CANNOT_DELETE_WAVE": "웨이브를 삭제할 수 없습니다. 웨이브상태가 [신규] 인지 확인 후 재시도 해주세요.",
+  "fields": {
+    "item_id": "품목",
+    "item_code": "품목코드",
+    "location_name": "로케이션",
+    "location_departure_name": "출발로케이션",
+    "location_arrival_name": "도착로케이션",
+    "supplier_name": "공급처",
+    "lot_number": "로트넘버",
+    "operation_type_name": "재고작업구분",
+    "quantity": "수량"
+  },
+  "rules": {
+    "IS_NOT_EMPTY": "[$t(error.fields.{message})] 은(는) 필수 입력 항목입니다.",
+    "NOT_EXIST": "[$t(error.fields.{message})] 이(가) 존재하지 않습니다.",
+    "ALREADY_EXIST": "[$t(error.fields.{message})] 이(가) 이미 존재합니다.",
+    "NOT_EXIST_FOR_MOVING": "이동 가능한 [$t(error.fields.{message})] 이(가) 존재하지 않습니다.",
+    "NOT_ENOUGH": "이동 가능한 재고 수량이 부족합니다."
+  }
+}

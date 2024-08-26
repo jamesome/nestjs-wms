@@ -1,0 +1,110 @@
+{
+  "EXAMPLE": "[{property}], '{value}'은(는) 예시입니다.{message}",
+  "fields": {
+    "warehouse": {
+      "name": "창고명",
+      "code": "창고코드",
+      "post_code": "우편번호",
+      "address": "주소",
+      "detail_address": "상세주소",
+      "manager": "창고 담당자",
+      "contact": "연락차"
+    },
+    "zone": {
+      "name": "분류명",
+      "code": "분류코드",
+      "remark": "비고",
+      "warehouse_id": "창고 일련번호"
+    },
+    "location": {
+      "name": "로케이션명",
+      "remark": "비고",
+      "zone_id": "분류 일련번호",
+      "warehouse_id": "창고 일련번호"
+    },
+    "item": {
+      "name": "품목명",
+      "property": "품목속성",
+      "zone_id": "분류 일련번호",
+      "warehouse_id": "창고 일련번호",
+      "item_codes": "품목 코드"
+    },
+    "item_code": {
+      "code": "품목 코드"
+    },
+    "lot": {
+      "item_id": "품목 일련번호",
+      "supplier_id": "공급처 일련번호",
+      "number": "로트넘버",
+      "expiration_date": "유통기한"
+    },
+    "supplier": {
+      "name": "공급처명"
+    },
+    "inventory_item": {
+      "item_id": "품목 일련번호",
+      "location_id": "로케이션 번호",
+      "lot_id": "로트 번호",
+      "quantity": "재고수량",
+      "status": "재고상태",
+      "lot_no": "로트번호",
+      "expiration_date": "유통기한"
+    },
+    "item_serial": {
+      "serial_no": "시리얼 번호"
+    },
+    "operation_type": {
+      "category": "구분",
+      "name": "재고작업구분명"
+    },
+    "transaction": {
+      "category": "구분",
+      "input_type": "입력구분",
+      "status": "전표상태",
+      "slip_number": "전표번호"
+    },
+    "transaction_item": {
+      "item_id": "품목 일련번호",
+      "location_departure_id": "출발 로케이션 번호",
+      "location_arrival_id": "도착 로케이션 번호",
+      "operation_type_id": "재고작업구분",
+      "supplier_id": "공급처 번호",
+      "quantity": "재고수량"
+    },
+    "transaction_b2c_order": {
+      "number": "판매처 주문번호",
+      "shop_name": "판매처명",
+      "recipient": "수령자명",
+      "contact": "연락처",
+      "post_code": "우편번호",
+      "address": "주소",
+      "detail_address": "상세주소",
+      "invoice_number": "송장번호",
+      "ordered_at": "주문일자"
+    },
+    "quantity": "수량",
+    "wave": {
+      "orders_per_wave": "작업단위 수량",
+      "orders_to_process": "작업대상 수량"
+    },
+    "stock_allocation_rule": {
+      "name": "룰 옵션명",
+      "method": "할당 방식",
+      "zone_filter": "존 포함여부"
+    }
+  },
+  "rules": {
+    "IS_NOT_EMPTY": "[$t(validation.fields.{message})] 은(는) 필수 입력 항목입니다.",
+    "IS_STRING": "[$t(validation.fields.{message})] 은(는) 문자만 입력 가능합니다.",
+    "IS_INT": "[$t(validation.fields.{message})] 은(는) 숫자만 입력 가능합니다.",
+    "MAX_LENGTH": "[$t(validation.fields.{message})] 은(는) 최대 {constraints.0}자까지 입력이 가능합니다.",
+    "LENGTH": "[$t(validation.fields.{message})] 은(는) {constraints.0}자 이상 {constraints.1}자 이하만 입력이 가능합니다.",
+    "IS_DATE": "[$t(validation.fields.{message})] 은(는) 날짜 형식만 입력 가능합니다.",
+    "MIN": "[$t(validation.fields.{message})] 은(는) {constraints.0} 이상만 입력 가능합니다.",
+    "STOCK_STATUS": "[$t(validation.fields.{message})] 은(는) 다음 중 하나의 값만 입력 가능합니다. : normal, abnormal, disposed",
+    "CATEGORY": "[$t(validation.fields.{message})] 은(는) 다음 중 하나의 값만 입력 가능합니다. : receiving, shipping, movement",
+    "INPUT_TYPE": "[$t(validation.fields.{message})] 은(는) 다음 중 하나의 값만 입력 가능합니다. : Web > 입고, Web > 로케이션 이동, Web > 출고",
+    "SLIP_STATUS": "[$t(validation.fields.{message})] 은(는) 다음 중 하나의 값만 입력 가능합니다. : scheduled, received, inspected, partial_receiving, partial_in_stock, returned, in_stock, in_transit, transferred, allocated, shipping, picked, packed, shipped, canceled",
+    "ONE_IS_REQUIRED": "하나의 값은 반드시 존재해야 합니다."
+  }
+}
