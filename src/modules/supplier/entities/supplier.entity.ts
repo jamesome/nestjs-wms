@@ -1,6 +1,6 @@
-import { Expose } from 'class-transformer';
 import { Lot } from 'src/modules/lot/entities/lot.entity';
 import { TransactionItem } from 'src/modules/transaction-item/entities/transaction-item.entity';
+import { Unique } from 'typeorm';
 import {
   Column,
   Entity,
@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'supplier' })
+@Unique(['name'])
 export class Supplier {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -26,7 +27,6 @@ export class Supplier {
   @OneToMany(() => Lot, (lot) => lot.supplier)
   lots!: Relation<Lot>[];
 
-  @Expose()
   @OneToMany(
     () => TransactionItem,
     (transactionItem) => transactionItem.supplier,

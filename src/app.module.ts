@@ -4,7 +4,7 @@ import {
   Module,
   RequestMethod,
 } from '@nestjs/common';
-// import { SentryModule } from '@sentry/nestjs/setup';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { AppController } from './app.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -32,17 +32,15 @@ import { ItemSerialModule } from './modules/item-serial/item-serial.module';
 import { LotModule } from './modules/lot/lot.module';
 import { OperationTypeModule } from './modules/operation-type/operation-type.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { CustomHttpExceptionFilter } from './common/filters/custom-http-exception.filter';
 import { DatabaseExceptionFilter } from './common/filters/database-exception.filter';
 import { ThrottlerExceptionFilter } from './common/filters/throttler-exception.filter';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { WinstonModule } from 'nest-winston';
 import { winstonOptions } from './config/winston.logger.config';
-import { SlackService } from './services/slack/slack.service';
 import { HttpModule } from '@nestjs/axios';
 import { TransactionB2cOrderModule } from './modules/transaction-b2c-order/transaction-b2c-order.module';
 import { TransactionGroupModule } from './modules/transaction-group/transaction-group.module';
-import { TransactionZoneModule } from './modules/transaction-zone/transaction-zone.module';
 import { FileService } from './services/file.service';
 import { EventsModule } from './events/events.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -53,10 +51,12 @@ import { StockAllocationRuleModule } from './modules/stock-allocation-rule/stock
 import { StockAllocationRuleShopModule } from './modules/stock-allocation-rule-shop/stock-allocation-rule-shop.module';
 import { StockAllocationRuleZoneModule } from './modules/stock-allocation-rule-zone/stock-allocation-rule-zone.module';
 import { ShopModule } from './modules/shop/shop.module';
+import { StockAllocatedModule } from './modules/stock-allocated/stock-allocated.module';
 
 @Module({
   imports: [
-    // SentryModule.forRoot(),
+    // [Sentry] 최상위 Module Import 유지 필수
+    SentryModule.forRoot(),
     HttpModule,
     WinstonModule.forRoot(winstonOptions),
     // 환경변수 유효성 검사
@@ -125,7 +125,6 @@ import { ShopModule } from './modules/shop/shop.module';
     TransactionModule,
     TransactionGroupModule,
     TransactionB2cOrderModule,
-    TransactionZoneModule,
     ShipperModule,
     WaveModule,
     WaveTransactionModule,
@@ -133,14 +132,20 @@ import { ShopModule } from './modules/shop/shop.module';
     StockAllocationRuleShopModule,
     StockAllocationRuleZoneModule,
     ShopModule,
+    StockAllocatedModule,
   ],
   controllers: [AppController],
   providers: [
     Logger,
-    // TODO: 사용하려면 CustomThrottlerGuard 필요
     {
+      // TODO: 사용하려면 CustomThrottlerGuard 필요
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      // [Sentry] 최상위 Global Filter 유지 필수
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
     },
     {
       provide: APP_FILTER,
@@ -152,9 +157,8 @@ import { ShopModule } from './modules/shop/shop.module';
     },
     {
       provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
+      useClass: CustomHttpExceptionFilter,
     },
-    SlackService,
     FileService,
   ],
 })

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { CONNECTION, HttpStatus } from 'src/common/constants';
-import { CustomHttpException } from 'src/common/exceptions/custom-http-exception';
+import { CustomHttpException } from 'src/common/exceptions/custom-http.exception';
 import { CreateStockAllocationRuleDto } from './dto/create-stock-allocation-rule.dto';
 import { UpdateStockAllocationRuleDto } from './dto/update-stock-allocation-rule.dto';
 import { StockAllocationRule } from './entities/stock-allocation-rule.entity';
@@ -295,8 +295,8 @@ export class StockAllocationRuleService {
     if (!stockAllocationRule) {
       throw new CustomHttpException(
         {
-          error: 'ENTITY_NOT_FOUND',
-          message: `StockAllocationRule with id ${id} not found`,
+          error: 'Not Found',
+          message: 'ENTITY_NOT_FOUND',
           statusCode: HttpStatus.NOT_FOUND,
         },
         HttpStatus.NOT_FOUND,
@@ -347,8 +347,8 @@ export class StockAllocationRuleService {
       if (!stockAllocationRule) {
         throw new CustomHttpException(
           {
-            error: 'ENTITY_NOT_FOUND',
-            message: `StockAllocationRule with id ${id} not found`,
+            error: 'Not Found',
+            message: 'ENTITY_NOT_FOUND',
             statusCode: HttpStatus.NOT_FOUND,
           },
           HttpStatus.NOT_FOUND,

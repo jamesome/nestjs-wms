@@ -1,10 +1,3 @@
-import { Expose } from 'class-transformer';
-import { Category, InputType, SlipStatus } from 'src/modules/enum';
-import { TransactionB2cOrder } from 'src/modules/transaction-b2c-order/entities/transaction-b2c-order.entity';
-import { TransactionGroup } from 'src/modules/transaction-group/entities/transaction-group.entity';
-import { TransactionItem } from 'src/modules/transaction-item/entities/transaction-item.entity';
-import { TransactionZone } from 'src/modules/transaction-zone/entities/transaction-zone.entity';
-import { WaveTransaction } from 'src/modules/wave-transaction/entities/wave-transaction.entity';
 import {
   Column,
   CreateDateColumn,
@@ -17,13 +10,18 @@ import {
   Relation,
   UpdateDateColumn,
 } from 'typeorm';
+import { Category, InputType, SlipStatus } from 'src/modules/enum';
+import { TransactionB2cOrder } from 'src/modules/transaction-b2c-order/entities/transaction-b2c-order.entity';
+import { TransactionGroup } from 'src/modules/transaction-group/entities/transaction-group.entity';
+import { TransactionItem } from 'src/modules/transaction-item/entities/transaction-item.entity';
+import { WaveTransaction } from 'src/modules/wave-transaction/entities/wave-transaction.entity';
+import { BooleanTransformer } from 'src/common/transformers/BooleanTransformer';
 
 @Entity('transaction')
 export class Transaction {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Expose({ name: 'transaction_group' })
   @ManyToOne(
     () => TransactionGroup,
     (transactionGroup) => transactionGroup.transactions,
@@ -31,7 +29,6 @@ export class Transaction {
   @JoinColumn({ name: 'transaction_group_id' })
   transactionGroup!: Relation<TransactionGroup>;
 
-  @Expose({ name: 'transaction_group_id' })
   @Column({
     name: 'transaction_group_id',
     nullable: false,
@@ -39,7 +36,6 @@ export class Transaction {
   })
   transactionGroupId!: number;
 
-  @Expose({ name: 'slip_number' })
   @Column('varchar', {
     name: 'slip_number',
     length: 50,
@@ -56,13 +52,12 @@ export class Transaction {
   })
   category!: Category;
 
-  @Expose({ name: 'input_type' })
   @Column({
     type: 'enum',
     enum: InputType,
     name: 'input_type',
     nullable: false,
-    comment: '입고 유형. incoming(개별입고)...',
+    comment: '입고 유형. receiving(개별입고)...',
   })
   inputType!: InputType;
 
@@ -77,7 +72,6 @@ export class Transaction {
   status!: SlipStatus | SlipStatus[];
 
   // TODO: 추후, User로 대체
-  @Expose({ name: 'create_worker' })
   @Column('varchar', {
     name: 'create_worker',
     length: 50,
@@ -85,7 +79,6 @@ export class Transaction {
   })
   createWorker!: string;
 
-  @Expose({ name: 'created_at' })
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
@@ -93,11 +86,9 @@ export class Transaction {
   })
   createdAt!: Date;
 
-  @Expose({ name: 'updated_at' })
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt?: Date | null = null;
 
-  @Expose({ name: 'completed_at' })
   @Column({
     type: 'timestamp',
     name: 'completed_at',
@@ -106,28 +97,28 @@ export class Transaction {
   })
   completedAt?: Date | null = null;
 
-  @Expose({ name: 'transaction_items' })
+  @Column('tinyint', {
+    name: 'is_hold',
+    width: 1,
+    nullable: false,
+    default: false,
+    comment: '기본 창고 여부',
+    transformer: new BooleanTransformer(),
+  })
+  isHold!: boolean;
+
   @OneToMany(
     () => TransactionItem,
     (transactionItem) => transactionItem.transaction,
   )
   transactionItems!: Relation<TransactionItem>[];
 
-  @Expose({ name: 'transaction_b2c_order' })
   @OneToOne(
     () => TransactionB2cOrder,
     (transactionB2cOrder) => transactionB2cOrder.transaction,
   )
-  transactionB2cOrder!: Relation<TransactionB2cOrder>[];
+  transactionB2cOrder!: Relation<TransactionB2cOrder>;
 
-  @Expose({ name: 'transaction_zones' })
-  @OneToMany(
-    () => TransactionZone,
-    (transactionZone) => transactionZone.transaction,
-  )
-  transactionZones!: Relation<TransactionZone>[];
-
-  @Expose({ name: 'wave_transactions' })
   @OneToMany(
     () => WaveTransaction,
     (waveTransaction) => waveTransaction.transaction,

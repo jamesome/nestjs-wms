@@ -1,6 +1,3 @@
-import { Expose } from 'class-transformer';
-import { StockAllocationRuleShop } from 'src/modules/stock-allocation-rule-shop/entities/stock-allocation-rule-shop.entity';
-import { TransactionB2cOrder } from 'src/modules/transaction-b2c-order/entities/transaction-b2c-order.entity';
 import {
   Column,
   Entity,
@@ -8,6 +5,8 @@ import {
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
+import { StockAllocationRuleShop } from 'src/modules/stock-allocation-rule-shop/entities/stock-allocation-rule-shop.entity';
+import { TransactionB2cOrder } from 'src/modules/transaction-b2c-order/entities/transaction-b2c-order.entity';
 
 @Entity({ name: 'shop' })
 export class Shop {
@@ -22,14 +21,12 @@ export class Shop {
   })
   name!: string;
 
-  @Expose({ name: 'stock_allocation_rule_shops' })
   @OneToMany(
     () => TransactionB2cOrder,
     (transactionB2cOrder) => transactionB2cOrder.shop,
   )
   transactionB2cOrders!: Relation<TransactionB2cOrder>[];
 
-  @Expose({ name: 'stock_allocation_rule_shops' })
   @OneToMany(
     () => StockAllocationRuleShop,
     (stockAllocationRuleShop) => stockAllocationRuleShop.shop,

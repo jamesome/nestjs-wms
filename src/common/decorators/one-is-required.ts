@@ -1,20 +1,38 @@
 import {
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
-  ValidationArguments,
 } from 'class-validator';
 
-// args 중에 하나는 반드시 필요
-@ValidatorConstraint({ name: 'oneIsRequired ', async: false })
-export class OneIsRequired implements ValidatorConstraintInterface {
-  validate(_value: any, args: ValidationArguments) {
-    const [prop1, prop2] = args.constraints;
-    const object = args.object as any;
-    return object[prop1] || object[prop2];
+@ValidatorConstraint({ name: 'oneIsRequired', async: false })
+export class OneIsRequiredConstraint implements ValidatorConstraintInterface {
+  validate(_: any, args: ValidationArguments) {
+    const [firstProp, secondProp] = args.constraints;
+    const obj = args.object as any;
+    return !!(obj[firstProp] || obj[secondProp]);
   }
 
   defaultMessage(args: ValidationArguments) {
-    const [prop1, prop2] = args.constraints;
-    return `Either ${prop1} or ${prop2} must be provided`;
+    const [firstProp, secondProp] = args.constraints;
+    return `Either ${firstProp} or ${secondProp} must be provided`;
   }
+}
+
+export function OneIsRequired(
+  prop1: string,
+  prop2: string,
+  validationOptions?: ValidationOptions,
+) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'oneIsRequired',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      constraints: [prop1, prop2],
+      validator: OneIsRequiredConstraint,
+    });
+  };
 }

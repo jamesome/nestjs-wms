@@ -41,6 +41,7 @@ export type I18nTranslations = {
         "CANNOT_DELETE_DUE_TO_DEFAULT_VALUE": string;
         "CANNOT_DELETE_DUE_TO_ASSOCIATED_ITEMS": string;
         "CANNOT_DELETE_WAVE": string;
+        "STOCK_SHORTAGE": string;
         "fields": {
             "item_id": string;
             "item_code": string;
@@ -63,111 +64,135 @@ export type I18nTranslations = {
     "validation": {
         "EXAMPLE": string;
         "fields": {
-            "warehouse": {
+            "Warehouse": {
                 "name": string;
                 "code": string;
-                "post_code": string;
+                "postCode": string;
                 "address": string;
-                "detail_address": string;
+                "detailAddress": string;
                 "manager": string;
                 "contact": string;
             };
-            "zone": {
+            "Zone": {
                 "name": string;
                 "code": string;
                 "remark": string;
-                "warehouse_id": string;
+                "warehouseId": string;
             };
-            "location": {
+            "Location": {
                 "name": string;
                 "remark": string;
-                "zone_id": string;
-                "warehouse_id": string;
+                "zoneId": string;
+                "warehouseId": string;
             };
-            "item": {
+            "Item": {
                 "name": string;
                 "property": string;
-                "zone_id": string;
-                "warehouse_id": string;
-                "item_codes": string;
+                "zoneId": string;
+                "warehouseId": string;
+                "itemCodes": string;
             };
-            "item_code": {
+            "ItemCode": {
                 "code": string;
             };
-            "lot": {
-                "item_id": string;
-                "supplier_id": string;
+            "Lot": {
+                "itemId": string;
+                "supplierId": string;
                 "number": string;
-                "expiration_date": string;
+                "expirationDate": string;
             };
-            "supplier": {
+            "Supplier": {
                 "name": string;
             };
-            "inventory_item": {
-                "item_id": string;
-                "location_id": string;
-                "lot_id": string;
-                "quantity": string;
+            "InventoryItem": {
+                "itemId": string;
+                "locationId": string;
+                "locationDepartureId": string;
+                "locationArrivalId": string;
+                "lotId": string;
+                "lotNo": string;
+                "expirationDate": string;
+                "operationTypeId": string;
                 "status": string;
-                "lot_no": string;
-                "expiration_date": string;
+                "quantity": string;
             };
-            "item_serial": {
-                "serial_no": string;
+            "ItemSerial": {
+                "serialNo": string;
             };
-            "operation_type": {
+            "OperationType": {
                 "category": string;
                 "name": string;
             };
-            "transaction": {
+            "Transaction": {
                 "category": string;
-                "input_type": string;
+                "inputType": string;
                 "status": string;
-                "slip_number": string;
+                "slipNumber": string;
+                "endDate": string;
+                "ordersToProcess": string;
             };
-            "transaction_item": {
-                "item_id": string;
-                "location_departure_id": string;
-                "location_arrival_id": string;
-                "operation_type_id": string;
-                "supplier_id": string;
+            "ShippingTransaction": {
+                "slipNumber": string;
+                "status": string;
+                "order": string;
+                "items": string;
+            };
+            "TransactionItem": {
+                "itemId": string;
+                "locationDepartureId": string;
+                "locationArrivalId": string;
+                "operationTypeId": string;
+                "supplierId": string;
                 "quantity": string;
             };
-            "transaction_b2c_order": {
+            "TransactionZone": {
+                "zoneId": string;
+                "transactionId": string;
+            };
+            "TransactionB2cOrder": {
                 "number": string;
-                "shop_name": string;
+                "shopName": string;
                 "recipient": string;
                 "contact": string;
-                "post_code": string;
+                "postCode": string;
                 "address": string;
-                "detail_address": string;
-                "invoice_number": string;
-                "ordered_at": string;
+                "detailAddress": string;
+                "invoiceNumber": string;
+                "orderedAt": string;
             };
             "quantity": string;
-            "wave": {
-                "orders_per_wave": string;
-                "orders_to_process": string;
+            "Wave": {
+                "name": string;
+                "sequence": string;
+                "shipperId": string;
+                "ordersPerWave": string;
+                "ordersToProcess": string;
             };
-            "stock_allocation_rule": {
+            "WaveTransaction": {
+                "waveId": string;
+                "transactionId": string;
+            };
+            "StockAllocationRule": {
                 "name": string;
                 "method": string;
-                "zone_filter": string;
+                "zoneFilter": string;
+            };
+            "Paginate": {
+                "page": string;
+                "limit": string;
             };
         };
         "rules": {
-            "IS_NOT_EMPTY": string;
-            "IS_STRING": string;
-            "IS_INT": string;
-            "MAX_LENGTH": string;
-            "LENGTH": string;
-            "IS_DATE": string;
-            "MIN": string;
-            "STOCK_STATUS": string;
-            "CATEGORY": string;
-            "INPUT_TYPE": string;
-            "SLIP_STATUS": string;
-            "ONE_IS_REQUIRED": string;
+            "IsNotEmpty": string;
+            "IsString": string;
+            "IsInt": string;
+            "MaxLength": string;
+            "Length": string;
+            "IsDate": string;
+            "Min": string;
+            "OneIsRequired": string;
+            "IsWithInMaxRange": string;
+            "IsEnum": string;
         };
     };
 };

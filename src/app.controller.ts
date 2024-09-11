@@ -9,4 +9,9 @@ export class AppController {
   root(): object {
     return { message: 'Sellmate WMS API' };
   }
+
+  @Get('raise_server_error')
+  raiseError(): void {
+    throw new Error();
+  }
 }

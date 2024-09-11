@@ -3,6 +3,8 @@ import { LotService } from './lot.service';
 import { CreateLotDto } from './dto/create-lot.dto';
 import { FindLotDto } from './dto/find-lot.dto';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { EntityByIdPipe } from 'src/common/pipes/entity-by-id.pipe';
+import { Lot } from './entities/lot.entity';
 
 @Controller('lot')
 @ApiExcludeController()
@@ -20,7 +22,7 @@ export class LotController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.lotService.findOne(+id);
+  findOne(@Param('id', EntityByIdPipe(Lot)) lot: Lot) {
+    return lot;
   }
 }

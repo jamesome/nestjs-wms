@@ -1,0 +1,29 @@
+services:
+  app:
+    image: gitlab.corp.sellmate.co.kr:5005/sellmate/wms/app:dev
+    container_name: sellmate_wms_app_staging
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - '${APP_PORT:-3000}:${APP_PORT:-3000}'
+    volumes:
+      - file-storage:/srv/app/uploads
+
+  db:
+    extends:
+      file: docker-compose.override.yml
+      service: db-tenant
+    container_name: sellmate_wms_db_staging
+    volumes:
+      - db-storage:/var/lib/mysql
+      - ./db/mysql/conf.d:/etc/mysql/conf.d
+
+volumes:
+  db-storage:
+  file-storage:
+    external: false
+    driver_opts:
+      type: 'nfs'
+      o: 'addr=10.0.64.9,nolock,soft,rw'
+      device: ':/volume1/Sellmate/WMS/upload_files/'

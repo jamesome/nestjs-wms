@@ -1,21 +1,14 @@
-import { IsInt, IsOptional, Max } from 'class-validator';
-import { i18nValidationMessage } from 'nestjs-i18n';
+import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
 
 export class PaginateDto {
   @IsOptional()
-  @IsInt({
-    message: i18nValidationMessage('validation.IS_INT'),
-  })
-
-  // @Min(1)
+  @I18nValidate(IsInt)
+  @I18nValidate(Min, 1)
   page?: number;
 
   @IsOptional()
-  @IsInt({
-    message: i18nValidationMessage('validation.IS_INT'),
-  })
-  @Max(100, {
-    message: i18nValidationMessage('validation.MAX'),
-  })
+  @I18nValidate(IsInt)
+  @I18nValidate(Max, 100)
   limit?: number;
 }

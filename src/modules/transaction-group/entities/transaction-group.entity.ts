@@ -1,4 +1,3 @@
-import { Expose } from 'class-transformer';
 import { TimestampedEntity } from 'src/modules/timestamped-entity';
 import { Transaction } from 'src/modules/transaction/entities/transaction.entity';
 import {
@@ -7,14 +6,15 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   Relation,
+  Unique,
 } from 'typeorm';
 
 @Entity('transaction_group')
+@Unique(['transactionNumber'])
 export class TransactionGroup extends TimestampedEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Expose({ name: 'transaction_number' })
   @Column('varchar', {
     name: 'transaction_number',
     length: 50,
@@ -24,7 +24,6 @@ export class TransactionGroup extends TimestampedEntity {
   })
   transactionNumber!: string;
 
-  @Expose({ name: 'transactions' })
   @OneToMany(() => Transaction, (transaction) => transaction.transactionGroup)
   transactions!: Relation<Transaction>[];
 }

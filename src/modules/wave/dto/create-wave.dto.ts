@@ -1,37 +1,9 @@
-import { IsInt, IsNotEmpty } from 'class-validator';
-import { i18nValidationMessage } from 'nestjs-i18n';
+import { Min } from 'class-validator';
+import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
+import { TransformStringToNumber } from 'src/common/decorators/transform-string-to-number';
 
 export class CreateWaveDto {
-  @IsNotEmpty({
-    message: i18nValidationMessage('validation.rules.IS_NOT_EMPTY', {
-      message: 'wave.sequence',
-    }),
-  })
-  @IsInt({
-    message: i18nValidationMessage('validation.rules.IS_INT', {
-      message: 'wave.sequence',
-    }),
-  })
-  sequence!: number;
-
-  @IsNotEmpty({
-    message: i18nValidationMessage('validation.rules.IS_NOT_EMPTY', {
-      message: 'wave.shipper_id',
-    }),
-  })
-  @IsInt({
-    message: i18nValidationMessage('validation.rules.IS_INT', {
-      message: 'wave.shipper_id',
-    }),
-  })
-  shipperId!: number;
-
-  @IsNotEmpty({
-    message: i18nValidationMessage('validation.rules.IS_NOT_EMPTY', {
-      message: 'wave.name',
-    }),
-  })
-  name!: string;
-
-  createWorker!: string;
+  @TransformStringToNumber()
+  @I18nValidate(Min, 1)
+  ordersPerWave!: number; // 작업단위 수량(number of orders per wave)
 }

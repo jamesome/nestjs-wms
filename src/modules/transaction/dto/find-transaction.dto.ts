@@ -1,62 +1,54 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreateTransactionDto } from './create-transaction.dto';
-import { IsOptional } from 'class-validator';
-import { Expose } from 'class-transformer';
+import { IsOptional, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 import { Category, InputType, SlipStatus } from 'src/modules/enum';
+import { IsWithinMaxRange } from 'src/common/decorators/is-within-max-range';
+import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
+import { TransformStringToNumber } from 'src/common/decorators/transform-string-to-number';
 
 export class FindTransactionDto extends PartialType(CreateTransactionDto) {
-  @IsOptional()
-  include?: string | null;
+  // 출고지시일자(created_at), 출고확정일자(completed_at)
+  dateType!: string;
 
   @IsOptional()
-  @Expose({ name: 'start_date' })
-  startDate?: Date;
+  @Type(() => Date)
+  startDate!: Date;
 
   @IsOptional()
-  @Expose({ name: 'end_date' })
-  endDate?: Date;
+  @I18nValidate(IsWithinMaxRange, 'startDate', 30)
+  @Type(() => Date)
+  endDate!: Date;
 
   @IsOptional()
-  @Expose({ name: 'input_type' })
   inputType?: InputType;
 
   @IsOptional()
-  @Expose({ name: 'status' })
   status?: SlipStatus | SlipStatus[];
 
   @IsOptional()
-  @Expose({ name: 'category' })
   category?: Category;
 
   @IsOptional()
-  @Expose({ name: 'item_name' })
   itemName?: string;
 
   @IsOptional()
-  @Expose({ name: 'number' })
   number?: string;
 
   @IsOptional()
-  @Expose({ name: 'recipient' })
   recipient?: string;
 
   @IsOptional()
-  @Expose({ name: 'contact' })
   contact?: string;
 
   @IsOptional()
-  @Expose({ name: 'created_at' })
-  createdAt?: boolean;
-
-  @IsOptional()
-  @Expose({ name: 'completed_at' })
-  completedAt?: boolean;
-
-  @IsOptional()
-  @Expose({ name: 'order_type' })
   orderType?: string;
 
   @IsOptional()
-  @Expose({ name: 'ids' })
   ids?: number[];
+
+  @IsOptional()
+  @TransformStringToNumber()
+  @I18nValidate(Min, 1)
+  ordersToProcess?: number; // 작업대상 수량(total orders to process)
 }

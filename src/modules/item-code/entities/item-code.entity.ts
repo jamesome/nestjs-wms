@@ -1,5 +1,3 @@
-import { Expose } from 'class-transformer';
-import { Item } from 'src/modules/item/entities/item.entity';
 import {
   Column,
   Entity,
@@ -7,9 +5,12 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   Relation,
+  Unique,
 } from 'typeorm';
+import { Item } from 'src/modules/item/entities/item.entity';
 
 @Entity({ name: 'item_code' })
+@Unique(['code'])
 export class ItemCode {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -19,7 +20,6 @@ export class ItemCode {
   item!: Relation<Item>;
 
   @Column({ name: 'item_id' })
-  @Expose({ name: 'item_id' })
   itemId!: number;
 
   @Column('varchar', {

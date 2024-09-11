@@ -7,6 +7,7 @@ import { LotService } from '../lot/lot.service';
 import { ItemService } from '../item/item.service';
 import { FileService } from 'src/services/file.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { InventoryItemService } from '../inventory-item/inventory-item.service';
 
 describe('TransactionController', () => {
   let controller: TransactionController;
@@ -33,6 +34,7 @@ describe('TransactionController', () => {
         TransactionService,
         LotService,
         ItemService,
+        InventoryItemService,
         FileService,
         {
           provide: CONNECTION,

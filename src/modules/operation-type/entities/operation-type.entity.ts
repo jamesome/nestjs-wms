@@ -6,7 +6,6 @@ import {
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
-import { Expose } from 'class-transformer';
 import { Category } from 'src/modules/enum';
 import { TransactionItem } from 'src/modules/transaction-item/entities/transaction-item.entity';
 
@@ -34,7 +33,6 @@ export class OperationType {
   })
   name!: string;
 
-  @Expose({ name: 'is_default' })
   @Column('tinyint', {
     name: 'is_default',
     nullable: false,

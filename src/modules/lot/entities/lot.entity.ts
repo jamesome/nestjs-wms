@@ -7,11 +7,11 @@ import {
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
-import { Expose } from 'class-transformer';
 import { InventoryItem } from 'src/modules/inventory-item/entities/inventory-item.entity';
 import { Item } from 'src/modules/item/entities/item.entity';
 import { Supplier } from 'src/modules/supplier/entities/supplier.entity';
 import { TransactionItem } from 'src/modules/transaction-item/entities/transaction-item.entity';
+import { StockAllocated } from 'src/modules/stock-allocated/entities/stock-allocated.entity';
 
 @Entity({ name: 'lot' })
 export class Lot {
@@ -22,7 +22,6 @@ export class Lot {
   @JoinColumn({ name: 'item_id' })
   item!: Relation<Item>;
 
-  @Expose({ name: 'item_id' })
   @Column({ name: 'item_id' })
   itemId!: number;
 
@@ -33,7 +32,6 @@ export class Lot {
   @JoinColumn({ name: 'supplier_id' })
   supplier!: Relation<Supplier>;
 
-  @Expose({ name: 'supplier_id' })
   @Column({
     name: 'supplier_id',
     nullable: false,
@@ -49,7 +47,6 @@ export class Lot {
   })
   number!: string;
 
-  @Expose({ name: 'expiration_date' })
   @Column({
     type: 'date',
     name: 'expiration_date',
@@ -63,4 +60,10 @@ export class Lot {
 
   @OneToMany(() => TransactionItem, (transactionItem) => transactionItem.lot)
   transactions!: Relation<TransactionItem>[];
+
+  @OneToMany(
+    () => StockAllocated,
+    (stockAllStockAllocated) => stockAllStockAllocated.lot,
+  )
+  stockAllocations!: Relation<StockAllocated>[];
 }

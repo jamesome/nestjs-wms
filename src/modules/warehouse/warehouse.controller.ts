@@ -26,6 +26,7 @@ import { FindWarehouseDto } from './dto/find-warehouse.dto';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
 import { HttpStatus } from 'src/common/constants';
 import { Warehouse } from './entities/warehouse.entity';
+import { EntityByIdPipe } from 'src/common/pipes/entity-by-id.pipe';
 
 @Controller('warehouses')
 @ApiTags('Warehouse API')
@@ -57,8 +58,8 @@ export class WarehouseController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number) {
-    return await this.warehouseService.findOne(id);
+  async findOne(@Param('id', EntityByIdPipe(Warehouse)) warehouse: Warehouse) {
+    return warehouse;
   }
 
   @Put(':id')

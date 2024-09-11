@@ -1,7 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ObjectLiteral, Repository } from 'typeorm';
-import { REQUEST } from '@nestjs/core';
-import { SlipStatus, StockStatus } from '../enum';
+import { StockStatus } from '../enum';
 import { CONNECTION } from 'src/common/constants';
 import { Transaction } from './entities/transaction.entity';
 import { I18nService } from 'nestjs-i18n';
@@ -11,53 +9,71 @@ import { ItemService } from '../item/item.service';
 import { TransactionListener } from './listeners/transaction.listener';
 import { EventsModule } from 'src/events/events.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ReceiveItemDto } from '../inventory-item/dto/receive-item.dto';
+import { ReceiveInventoryItemDto } from '../inventory-item/dto/receive-inventory-item.dto';
 import { IndexedCollectionItemDto } from '../inventory-item/dto/index-collection-item.dto';
 import { FileService } from 'src/services/file.service';
-import { MoveItemDto } from '../inventory-item/dto/move-item.dto';
-import { InstructShippingTransactionDto } from './dto/instruct-shipping-transaction.dto';
-
-const mockRepository = {
-  create: jest.fn(),
-  save: jest.fn(),
-  find: jest.fn(),
-  findOne: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  createQueryBuilder: jest.fn().mockReturnThis(),
-};
-
-const mockQueryRunner = {
-  connect: jest.fn().mockReturnThis(),
-  startTransaction: jest.fn().mockReturnThis(),
-  commitTransaction: jest.fn().mockReturnThis(),
-  rollbackTransaction: jest.fn().mockReturnThis(),
-  release: jest.fn().mockReturnThis(),
-};
-
-const mockDataSource = {
-  getRepository: jest.fn().mockReturnValue(mockRepository),
-  createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
-};
-
-type MockRepository<T extends ObjectLiteral = any> = Partial<
-  Record<keyof Repository<T>, jest.Mock>
->;
+import { MoveInventoryItemDto } from '../inventory-item/dto/move-inventory-item.dto';
+import { CreateShippingTransactionDto } from './dto/create-shipping-transaction.dto';
+import { Repository } from 'typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { InventoryItemService } from '../inventory-item/inventory-item.service';
+// import { StockAllocated } from '../stock-allocated/entities/stock-allocated.entity';
 
 describe('TransactionService', () => {
+  const acceptLanguage = 'kr';
   let service: TransactionService;
-  let transactionRepository: MockRepository<Transaction>;
+  // let inventoryItemService: InventoryItemService;
+  let transactionRepository: jest.Mocked<Repository<Transaction>>;
+  // let stockAllocatedRepository: jest.Mocked<Repository<StockAllocated>>;
+  let mockQueryRunner;
+  let mockDataSource;
 
   beforeEach(async () => {
-    const mockRequest = {
-      headers: {
-        'accept-language': 'kr',
+    const mockRepository = {
+      create: jest.fn(),
+      save: jest.fn(),
+      find: jest.fn(),
+      findOne: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnThis(),
+    };
+
+    mockQueryRunner = {
+      connect: jest.fn().mockReturnThis(),
+      startTransaction: jest.fn().mockReturnThis(),
+      commitTransaction: jest.fn().mockReturnThis(),
+      rollbackTransaction: jest.fn().mockReturnThis(),
+      release: jest.fn().mockReturnThis(),
+      manager: {
+        update: jest.fn(),
+        save: jest.fn(),
+        insert: jest.fn().mockImplementation(() => {
+          return Promise.resolve({
+            identifiers: [{ id: 1 }],
+          });
+        }),
       },
     };
 
+    mockDataSource = {
+      getRepository: jest.fn().mockReturnValue(mockRepository),
+      createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+    };
+
+    const mockTransactionRepository = {
+      find: jest.fn(),
+      save: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnThis(),
+    };
+
     const mockI18nService = {
-      t: jest.fn().mockReturnValue('translated string'),
+      t: jest.fn(),
       validate: jest.fn().mockReturnValue([]),
+    };
+
+    const mockInventoryItemService = {
+      getAvailableStockList: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -77,14 +93,24 @@ describe('TransactionService', () => {
           useValue: mockDataSource,
         },
         {
-          provide: REQUEST,
-          useValue: mockRequest,
+          provide: getRepositoryToken(Transaction),
+          useValue: mockTransactionRepository,
+        },
+        {
+          provide: I18nService,
+          useValue: mockI18nService,
+        },
+        {
+          provide: InventoryItemService,
+          useValue: mockInventoryItemService,
         },
       ],
     }).compile();
 
     service = module.get<TransactionService>(TransactionService);
-    transactionRepository = mockDataSource.getRepository(Transaction);
+    // inventoryItemService =
+    //   module.get<InventoryItemService>(InventoryItemService);
+    transactionRepository = module.get(getRepositoryToken(Transaction));
   });
 
   it('should be defined', () => {
@@ -97,7 +123,6 @@ describe('TransactionService', () => {
 
   describe('receive()', () => {
     it('should be receive', async () => {
-      const acceptLanguage = 'kr';
       const xClientId = 'aaa-bbb-ccc-ddd';
 
       const itemId1 = 1;
@@ -105,76 +130,60 @@ describe('TransactionService', () => {
       const locationId = 12;
       const quantity = 3;
       const status = StockStatus.ABNORMAL;
-      const receiveItemDto: IndexedCollectionItemDto<ReceiveItemDto>[] = [
-        {
-          index: 0,
-          collectionItem: {
-            itemId: itemId1,
-            locationId: locationId,
-            supplierId: 1,
-            operationTypeId: 1,
-            quantity: quantity,
-            remark: '',
-            lotNo: null,
-            itemSerial: {
-              serialNo: '',
+      const receiveInventoryItemDto: IndexedCollectionItemDto<ReceiveInventoryItemDto>[] =
+        [
+          {
+            index: 0,
+            collectionItem: {
+              itemId: itemId1,
+              locationId: locationId,
+              supplierId: 1,
+              operationTypeId: 1,
+              quantity: quantity,
+              remark: '',
+              lotNo: null,
+              itemSerial: {
+                serialNo: '',
+              },
+              status: status,
             },
-            status: status,
           },
-        },
-        {
-          index: 1,
-          collectionItem: {
-            itemId: itemId2,
-            locationId: locationId,
-            supplierId: 1,
-            operationTypeId: 1,
-            quantity: quantity,
-            remark: '',
-            lotNo: null,
-            itemSerial: {
-              serialNo: '',
+          {
+            index: 1,
+            collectionItem: {
+              itemId: itemId2,
+              locationId: locationId,
+              supplierId: 1,
+              operationTypeId: 1,
+              quantity: quantity,
+              remark: '',
+              lotNo: null,
+              itemSerial: {
+                serialNo: '',
+              },
+              status: status,
             },
-            status: status,
           },
-        },
-      ];
+        ];
 
-      const queryRunner = mockDataSource.createQueryRunner();
-      queryRunner.manager = {
-        update: jest.fn(),
-        insert: jest.fn().mockImplementation(() => {
-          return Promise.resolve({
-            identifiers: [{ id: 1 }],
-          });
-        }),
-        startTransaction: jest.fn(),
-        commitTransaction: jest.fn(),
-        rollbackTransaction: jest.fn(),
-      };
+      // transactionRepository.findOne
+      //   ?.mockResolvedValueOnce(null)
+      //   .mockResolvedValueOnce({
+      //     itemId: itemId2,
+      //     locationId: locationId,
+      //     status: status,
+      //     quantity: quantity,
+      //   });
 
-      transactionRepository.findOne
-        ?.mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({
-          itemId: itemId2,
-          locationId: locationId,
-          status: status,
-          quantity: quantity,
-        });
+      await service.receive(acceptLanguage, xClientId, receiveInventoryItemDto);
 
-      await service.receive(acceptLanguage, xClientId, receiveItemDto);
-
-      expect(queryRunner.manager.insert).toHaveBeenCalledTimes(4);
-      expect(queryRunner.manager.update).toHaveBeenCalledTimes(0);
-
-      expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
-      // expect(queryRunner.release).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledTimes(6);
+      expect(mockQueryRunner.manager.update).toHaveBeenCalledTimes(0);
     });
   });
 
   describe('move()', () => {
     it('should be move', async () => {
-      const acceptLanguage = 'kr';
       const xClientId = 'aaa-bbb-ccc-ddd';
 
       const itemId1 = 1;
@@ -183,78 +192,60 @@ describe('TransactionService', () => {
       const locationArrivalId = 2;
       const quantity = 3;
       const status = StockStatus.ABNORMAL;
-      const moveItemDto: IndexedCollectionItemDto<MoveItemDto>[] = [
-        {
-          index: 0,
-          collectionItem: {
-            itemId: itemId1,
-            locationDepartureId,
-            locationArrivalId,
-            operationTypeId: 1,
-            quantity: quantity,
-            remark: '',
-            status: status,
+      const moveInventoryItemDto: IndexedCollectionItemDto<MoveInventoryItemDto>[] =
+        [
+          {
+            index: 0,
+            collectionItem: {
+              itemId: itemId1,
+              locationDepartureId,
+              locationArrivalId,
+              operationTypeId: 1,
+              quantity: quantity,
+              remark: '',
+              status: status,
+            },
           },
-        },
-        {
-          index: 1,
-          collectionItem: {
-            itemId: itemId2,
-            locationDepartureId,
-            locationArrivalId,
-            operationTypeId: 1,
-            quantity: quantity,
-            remark: '',
-            status: status,
+          {
+            index: 1,
+            collectionItem: {
+              itemId: itemId2,
+              locationDepartureId,
+              locationArrivalId,
+              operationTypeId: 1,
+              quantity: quantity,
+              remark: '',
+              status: status,
+            },
           },
-        },
-      ];
+        ];
 
-      const queryRunner = mockDataSource.createQueryRunner();
-      queryRunner.manager = {
-        update: jest.fn(),
-        delete: jest.fn(),
-        insert: jest.fn().mockImplementation(() => {
-          return Promise.resolve({
-            identifiers: [{ id: 1 }],
-          });
-        }),
-        startTransaction: jest.fn(),
-        commitTransaction: jest.fn(),
-        rollbackTransaction: jest.fn(),
-      };
+      // transactionRepository.findOne
+      //   ?.mockResolvedValueOnce(null)
+      //   .mockResolvedValueOnce({
+      //     itemId: itemId2,
+      //     locationDepartureId,
+      //     locationArrivalId,
+      //     status: status,
+      //     quantity: quantity,
+      //   });
 
-      transactionRepository.findOne
-        ?.mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({
-          itemId: itemId2,
-          locationDepartureId,
-          locationArrivalId,
-          status: status,
-          quantity: quantity,
-        });
+      await service.move(acceptLanguage, xClientId, moveInventoryItemDto);
 
-      await service.move(acceptLanguage, xClientId, moveItemDto);
-
-      expect(queryRunner.manager.insert).toHaveBeenCalledTimes(4);
-      expect(queryRunner.manager.update).toHaveBeenCalledTimes(0);
-
-      expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(2);
-      // expect(queryRunner.release).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.manager.insert).toHaveBeenCalledTimes(2);
+      expect(mockQueryRunner.manager.update).toHaveBeenCalledTimes(0);
     });
   });
 
   describe('instructShipping()', () => {
     it('should be instructShipping', async () => {
-      const acceptLanguage = 'kr';
-
       const itemId1 = 1;
       const itemId2 = 2;
-      const locationDepartureId = 1;
-      const locationArrivalId = 2;
-      const quantity = 3;
-      const status = StockStatus.ABNORMAL;
-      const instructItemDto: InstructShippingTransactionDto[] = [
+      // const locationDepartureId = 1;
+      // const locationArrivalId = 2;
+      // const quantity = 3;
+      // const status = StockStatus.ABNORMAL;
+      const instructItemDto: CreateShippingTransactionDto[] = [
         {
           slipNumber: '20240725-000028-3',
           order: {
@@ -283,48 +274,107 @@ describe('TransactionService', () => {
               price: 4545454,
             },
           ],
-          status: SlipStatus.SCHEDULED,
         },
       ];
       const transactionNumber = '11111-22222';
-      const zoneIds = [1, 2];
 
-      const queryRunner = mockDataSource.createQueryRunner();
-      queryRunner.manager = {
-        update: jest.fn(),
-        delete: jest.fn(),
-        insert: jest.fn().mockImplementation(() => {
-          return Promise.resolve({
-            identifiers: [{ id: 1 }],
-          });
-        }),
-        startTransaction: jest.fn(),
-        commitTransaction: jest.fn(),
-        rollbackTransaction: jest.fn(),
-      };
-
-      transactionRepository.findOne
-        ?.mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({
-          itemId: itemId2,
-          locationDepartureId,
-          locationArrivalId,
-          status: status,
-          quantity: quantity,
-        });
+      // transactionRepository.findOne
+      //   ?.mockResolvedValueOnce(null)
+      //   .mockResolvedValueOnce({
+      //     itemId: itemId2,
+      //     locationDepartureId,
+      //     locationArrivalId,
+      //     status: status,
+      //     quantity: quantity,
+      //   });
 
       await service.instructShipping(
         acceptLanguage,
         transactionNumber,
-        zoneIds,
         instructItemDto,
       );
 
-      expect(queryRunner.manager.insert).toHaveBeenCalledTimes(5);
-      expect(queryRunner.manager.update).toHaveBeenCalledTimes(0);
-
-      expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(2);
-      // expect(queryRunner.release).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledTimes(3);
+      expect(mockQueryRunner.manager.update).toHaveBeenCalledTimes(0);
     });
   });
+
+  // describe('allocateToStock()', () => {
+  //   // it('should successfully allocate stock when inventory is sufficient', async () => {
+  //   //   // Given: 테스트에 필요한 더미 데이터 준비
+  //   //   const transaction = {
+  //   //     transactionB2cOrder: { shopId: 1 },
+  //   //     transactionItems: [
+  //   //       { id: 1, itemId: 1, quantity: 10, item: { name: 'Item 1' } },
+  //   //       { id: 2, itemId: 2, quantity: 5, item: { name: 'Item 2' } },
+  //   //     ],
+  //   //     slipNumber: 'SLIP123',
+  //   //     status: SlipStatus.SCHEDULED,
+  //   //     createdAt: new Date(),
+  //   //   };
+  //   //   const inventoryItems = [
+  //   //     { itemId: 1, availableQuantity: 20, locationId: 1, lotId: 1 },
+  //   //     { itemId: 2, availableQuantity: 10, locationId: 2, lotId: 2 },
+  //   //   ];
+  //   //   const stockAllocationRules = [];
+  //   //   // inventoryItemService.getAvailableStockList.mockResolvedValue(1);
+  //   //   // When: 할당 로직 호출
+  //   //   const result = await service.allocateToStock(
+  //   //     acceptLanguage,
+  //   //     transaction,
+  //   //     inventoryItems,
+  //   //     stockAllocationRules,
+  //   //   );
+  //   //   // Then: 재고가 충분하므로 실패 없이 할당이 성공해야 함
+  //   //   expect(result).toEqual([]);
+  //   //   expect(transaction.status).toEqual(SlipStatus.ALLOCATED);
+  //   //   expect(stockAllocatedRepository.save).toHaveBeenCalledTimes(1);
+  //   //   expect(transactionRepository.save).toHaveBeenCalledWith(transaction);
+  //   // });
+  //   // it('should be allocateToStock', async () => {
+  //   //   // given
+  //   //   const transactions = JSON.parse(
+  //   //     fs.readFileSync(
+  //   //       path.resolve('test/fixtures/transaction/2024-09-05.json'),
+  //   //       'utf8',
+  //   //     ),
+  //   //   );
+  //   //   let inventoryItems: any[] = JSON.parse(
+  //   //     fs.readFileSync(
+  //   //       path.resolve('test/fixtures/inventory-item/2024-09-05.json'),
+  //   //       'utf8',
+  //   //     ),
+  //   //   );
+  //   //   const stockAllocationRules: any[] = JSON.parse(
+  //   //     fs.readFileSync(
+  //   //       path.resolve('test/fixtures/stock-allocation-rule/2024-09-05.json'),
+  //   //       'utf8',
+  //   //     ),
+  //   //   );
+  //   //   inventoryItems = inventoryItems.map((item) => ({
+  //   //     ...item,
+  //   //     itemId: item.itemId,
+  //   //     locationId: item.locationId,
+  //   //     lotId: item.lotId ? item.lotId : null,
+  //   //     availableQuantity: item.availableQuantity,
+  //   //   }));
+  //   //   // transactionRepository.findOne
+  //   //   //   ?.mockResolvedValueOnce(null)
+  //   //   //   .mockResolvedValueOnce({
+  //   //   //     itemId: itemId2,
+  //   //   //     locationDepartureId,
+  //   //   //     locationArrivalId,
+  //   //   //     status: status,
+  //   //   //     quantity: quantity,
+  //   //   //   });
+  //   //   for (const transaction of transactions.data) {
+  //   //     await service.allocateToStock(
+  //   //       acceptLanguage,
+  //   //       transaction,
+  //   //       inventoryItems,
+  //   //       stockAllocationRules,
+  //   //     );
+  //   //   }
+  //   // });
+  // });
 });

@@ -6,14 +6,14 @@ import {
 import { CONNECTION, HttpStatus } from 'src/common/constants';
 import { DataSource, Raw, Repository } from 'typeorm';
 import { DateTime } from 'luxon';
-import { CustomHttpException } from 'src/common/exceptions/custom-http-exception';
+import { CustomHttpException } from 'src/common/exceptions/custom-http.exception';
 import { Wave } from './entities/wave.entity';
 import { WaveTransaction } from '../wave-transaction/entities/wave-transaction.entity';
 import { Transaction } from '../transaction/entities/transaction.entity';
 import { UpdateWaveDto } from './dto/update-wave.dto';
 import { FindWaveDto } from './dto/find-wave.dto';
-import { MakeWaveDto } from './dto/make-wave.dto';
-import { SlipStatus, WaveStatus } from '../enum';
+import { CreateWaveDto } from './dto/create-wave.dto';
+import { WaveStatus } from '../enum';
 
 @Injectable()
 export class WaveService {
@@ -25,19 +25,8 @@ export class WaveService {
     this.transactionRepository = this.dataSource.getRepository(Transaction);
   }
 
-  async create(makeWaveDto: MakeWaveDto, transactions) {
-    const { ordersPerWave, ordersToProcess } = makeWaveDto;
-
-    if (!transactions || transactions.length === 0) {
-      throw new CustomHttpException(
-        {
-          error: 'ENTITY_NOT_FOUND',
-          message: `Transaction not found`,
-          statusCode: HttpStatus.NOT_FOUND,
-        },
-        HttpStatus.NOT_FOUND,
-      );
-    }
+  async create(createWaveDto: CreateWaveDto, transactions) {
+    const { ordersPerWave } = createWaveDto;
 
     const now = DateTime.now().startOf('day');
     const today = now.toFormat('yyyy-MM-dd');
@@ -52,7 +41,9 @@ export class WaveService {
       order: {
         id: 'DESC',
       },
+      withDeleted: true,
     });
+
     let sequence = waveEntity ? Number(waveEntity.sequence) + 1 : 1;
     const queryRunner = this.dataSource.createQueryRunner();
 
@@ -76,25 +67,13 @@ export class WaveService {
       const batchSize = 500;
       const waveTransactions: WaveTransaction[] = [];
 
-      // 작업 대상 확정: 총 몇개의 대상 주문을 Wave로 생성 할 것인가.
-      const targetOrders = ordersToProcess
-        ? transactions.slice(0, ordersToProcess)
-        : transactions;
-
       // 작업 단위 구성: 지정 된 주문 수 만큼 각 웨이브를 생성
-      while (targetOrders.length) {
+      while (transactions.length) {
         const wave = await createWave();
-        const chunk = ordersPerWave
-          ? targetOrders.splice(0, ordersPerWave)
-          : targetOrders.splice(0, ordersToProcess);
+        const chunk = transactions.splice(0, ordersPerWave);
 
         const waveTransactionsChunk = await Promise.all(
           chunk.map(async (transaction: Transaction) => {
-            // 전표상태 갱신. 작업예정 -> 미할당.
-            await queryRunner.manager.update(Transaction, transaction.id, {
-              status: SlipStatus.UNALLOCATED,
-            });
-
             const waveTransaction = new WaveTransaction();
             waveTransaction.wave = wave;
             waveTransaction.transaction = transaction;
@@ -146,9 +125,12 @@ export class WaveService {
     }, 'countByStatus');
 
     createdAt &&
-      queryBuilder.andWhere('wave.created_at >= :createdAt', {
-        createdAt,
-      });
+      queryBuilder.andWhere(
+        'wave.created_at BETWEEN :createdAt and DATE_ADD(:createdAt, INTERVAL 1 DAY)',
+        {
+          createdAt,
+        },
+      );
 
     // 단포 or 합포 필터
     if (orderType) {
@@ -203,8 +185,8 @@ export class WaveService {
     if (!wave) {
       throw new CustomHttpException(
         {
-          error: 'ENTITY_NOT_FOUND',
-          message: 'NOT_FOUND',
+          error: 'Not Found',
+          message: 'ENTITY_NOT_FOUND',
           statusCode: HttpStatus.NOT_FOUND,
         },
         HttpStatus.NOT_FOUND,
@@ -215,8 +197,8 @@ export class WaveService {
     if (wave.status != WaveStatus.NEW) {
       throw new CustomHttpException(
         {
-          error: 'CANNOT_DELETE_WAVE',
-          message: 'CONFLICT',
+          error: 'Conflict',
+          message: 'CANNOT_DELETE_WAVE',
           statusCode: HttpStatus.CONFLICT,
         },
         HttpStatus.CONFLICT,
@@ -228,13 +210,6 @@ export class WaveService {
     await queryRunner.startTransaction();
 
     try {
-      for (const waveTransaction of wave.waveTransactions) {
-        const transaction = waveTransaction.transaction;
-        transaction.status = SlipStatus.SCHEDULED;
-
-        await queryRunner.manager.save(Transaction, transaction);
-      }
-
       await queryRunner.manager.delete(WaveTransaction, {
         waveId: id,
       });

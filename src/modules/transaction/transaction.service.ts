@@ -12,29 +12,38 @@ import { InventoryItem } from '../inventory-item/entities/inventory-item.entity'
 import { Transaction } from './entities/transaction.entity';
 import { TransactionItem } from '../transaction-item/entities/transaction-item.entity';
 import { TransactionB2cOrder } from '../transaction-b2c-order/entities/transaction-b2c-order.entity';
-import { TransactionZone } from '../transaction-zone/entities/transaction-zone.entity';
 import { TransactionGroup } from '../transaction-group/entities/transaction-group.entity';
 import { LotService } from '../lot/lot.service';
 import { ItemService } from '../item/item.service';
-import { Category, InputType, SlipStatus, StockStatus } from '../enum';
+import {
+  Category,
+  InputType,
+  SlipStatus,
+  StockAllocationMethod,
+  StockStatus,
+  ZoneFilter,
+} from '../enum';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { FindTransactionDto } from './dto/find-transaction.dto';
-import { InstructShippingTransactionDto } from './dto/instruct-shipping-transaction.dto';
+import { CreateShippingTransactionDto } from './dto/create-shipping-transaction.dto';
 import { CreateTransactionItemDto } from '../transaction-item/dto/create-transaction-item.dto';
 import { CreateLotDto } from '../lot/dto/create-lot.dto';
-import { CreateTransactionZoneDto } from '../transaction-zone/dto/create-transaction-zone.dto';
 import { IndexedCollectionItemDto } from '../inventory-item/dto/index-collection-item.dto';
-import { ReceiveItemDto } from '../inventory-item/dto/receive-item.dto';
-import { MoveItemDto } from '../inventory-item/dto/move-item.dto';
+import { ReceiveInventoryItemDto } from '../inventory-item/dto/receive-inventory-item.dto';
+import { MoveInventoryItemDto } from '../inventory-item/dto/move-inventory-item.dto';
 import { paginate, PaginateConfig, PaginateQuery } from 'nestjs-paginate';
 import { DateTime } from 'luxon';
 import { TransactionEvent } from './events/transaction.event';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ValidationError } from 'src/common/errors/validation-error';
 import { ManualValidationError } from 'src/common/errors/manual-validation-error';
-import { plainToInstance } from 'class-transformer';
 import { snakeCase } from 'lodash';
+import { StockAllocated } from '../stock-allocated/entities/stock-allocated.entity';
+import { In } from 'typeorm';
+import { StockAllocationRuleShop } from '../stock-allocation-rule-shop/entities/stock-allocation-rule-shop.entity';
+import { StockAllocationRuleZone } from '../stock-allocation-rule-zone/entities/stock-allocation-rule-zone.entity';
+import { PaginateDto } from '../paginate.dto';
 
 @Injectable()
 export class TransactionService {
@@ -42,6 +51,7 @@ export class TransactionService {
   private transactionGroupRepository: Repository<TransactionGroup>;
   private inventoryItemRepository: Repository<InventoryItem>;
   private itemSerialRepository: Repository<ItemSerial>;
+  private stockAllocatedRepository: Repository<StockAllocated>;
 
   constructor(
     @Inject(CONNECTION) private readonly dataSource: DataSource,
@@ -55,6 +65,8 @@ export class TransactionService {
       this.dataSource.getRepository(TransactionGroup);
     this.inventoryItemRepository = this.dataSource.getRepository(InventoryItem);
     this.itemSerialRepository = this.dataSource.getRepository(ItemSerial);
+    this.stockAllocatedRepository =
+      this.dataSource.getRepository(StockAllocated);
   }
 
   async create(createTransactionDto: CreateTransactionDto) {
@@ -66,7 +78,7 @@ export class TransactionService {
   async receive(
     acceptLanguage: string,
     xClientId: string,
-    receivedItems: IndexedCollectionItemDto<ReceiveItemDto>[],
+    receivedItems: IndexedCollectionItemDto<ReceiveInventoryItemDto>[],
   ) {
     const failures: {
       index: number;
@@ -78,27 +90,21 @@ export class TransactionService {
     await queryRunner.connect();
 
     const newTransactionNumber = await this.getOneNextSequence('RV');
-    const transactionGroup = await queryRunner.manager.insert(
-      TransactionGroup,
-      {
-        transactionNumber: newTransactionNumber,
-      },
-    );
+    const transactionGroup = new TransactionGroup();
+    transactionGroup.transactionNumber = newTransactionNumber;
 
-    const createTransactionDto: CreateTransactionDto = {
-      transactionGroupId: transactionGroup.identifiers[0].id,
-      slipNumber: `${newTransactionNumber}-1`,
-      category: Category.RECEIVING,
-      inputType: InputType.WEB_INCOMING,
-      status: SlipStatus.IN_STOCK,
-      createWorker: 'create_worker_name', // TODO: 추후, User로 대체
-    };
+    await queryRunner.manager.save(TransactionGroup, transactionGroup);
 
-    const transaction = await queryRunner.manager.insert(
-      Transaction,
-      createTransactionDto,
-    );
-    const transactionId = transaction.identifiers[0].id;
+    const transaction = new Transaction();
+    transaction.transactionGroup = transactionGroup;
+    transaction.slipNumber = `${newTransactionNumber}-1`;
+    transaction.status = SlipStatus.IN_STOCK;
+    transaction.category = Category.RECEIVING;
+    transaction.inputType = InputType.WEB_INCOMING;
+    transaction.createWorker = 'create_worker_name';
+
+    await queryRunner.manager.save(Transaction, transaction);
+
     const total = receivedItems.length;
 
     for (const [i, receivedItem] of receivedItems.entries()) {
@@ -167,7 +173,7 @@ export class TransactionService {
           ) {
             throw new ManualValidationError('error.LOT_ID_MISMATCH', {
               key: 'LOT_ID_MISMATCH',
-              property: 'lot_number', // 프론트로 전달 될 값이라 lot_no, lot_id => lot_number로 통일
+              property: 'lotNumber',
               value: collectionItem.lotNo ?? '',
             });
           }
@@ -222,21 +228,20 @@ export class TransactionService {
           lotId = lot.id;
         }
 
-        const createTransactionItemDto: CreateTransactionItemDto = {
-          transactionId: transactionId,
-          itemId: collectionItem.itemId,
-          locationDepartureId: null,
-          locationArrivalId: collectionItem.locationId,
-          lotId: lotId,
-          supplierId: collectionItem.supplierId,
-          operationTypeId: collectionItem.operationTypeId,
-          quantity: collectionItem.quantity,
-          status: collectionItem.status,
-          remark: collectionItem.remark,
-        };
+        const transactionItem = new TransactionItem();
+        transactionItem.transaction = transaction;
+        transactionItem.itemId = collectionItem.itemId;
+        transactionItem.locationDepartureId = null;
+        transactionItem.locationArrivalId = collectionItem.locationId;
+        transactionItem.lotId = lotId;
+        transactionItem.supplierId = collectionItem.supplierId;
+        transactionItem.operationTypeId = collectionItem.operationTypeId;
+        transactionItem.quantity = collectionItem.quantity;
+        transactionItem.status = collectionItem.status;
+        transactionItem.remark = collectionItem.remark;
 
         const transactionItemValidationErrors = await this.i18n.validate(
-          createTransactionItemDto,
+          transactionItem,
           {
             lang: acceptLanguage,
           },
@@ -264,10 +269,7 @@ export class TransactionService {
           });
         }
 
-        await queryRunner.manager.insert(
-          TransactionItem,
-          createTransactionItemDto,
-        );
+        await queryRunner.manager.save(TransactionItem, transactionItem);
 
         if (inventoryItemEntity && inventoryItemEntity.lotId === lotId) {
           await queryRunner.manager.update(InventoryItem, filters, {
@@ -282,7 +284,7 @@ export class TransactionService {
             lotId: lotId,
           });
 
-          await queryRunner.manager.insert(InventoryItem, newInventoryItem);
+          await queryRunner.manager.save(InventoryItem, newInventoryItem);
         }
 
         if (collectionItem?.itemSerial?.serialNo) {
@@ -291,7 +293,7 @@ export class TransactionService {
             serialNo: collectionItem.itemSerial.serialNo,
           });
 
-          await queryRunner.manager.insert(ItemSerial, itemSerial);
+          await queryRunner.manager.save(ItemSerial, itemSerial);
         }
 
         await queryRunner.commitTransaction();
@@ -327,17 +329,16 @@ export class TransactionService {
       this.eventEmitter.emit('transaction.received', transactionEvent);
     }
 
-    await this.transactionRepository.update(transactionId, {
-      completedAt: DateTime.utc().toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-    });
+    transaction.completedAt = new Date();
+    await this.transactionRepository.save(transaction);
 
-    return failures.length ? failures : '';
+    return failures;
   }
 
   async move(
     acceptLanguage: string,
     xClientId: string,
-    movedItems: IndexedCollectionItemDto<MoveItemDto>[],
+    movedItems: IndexedCollectionItemDto<MoveInventoryItemDto>[],
   ) {
     const failures: {
       index: number;
@@ -361,7 +362,7 @@ export class TransactionService {
       slipNumber: `${newTransactionNumber}-1`,
       category: Category.MOVEMENT,
       inputType: InputType.WEB_LOCATION_MOVEMENT,
-      status: SlipStatus.SHIPPED,
+      status: SlipStatus.TRANSFERRED,
       createWorker: 'create_worker_name', // TODO: 추후, User로 대체
     };
 
@@ -423,7 +424,7 @@ export class TransactionService {
         if (!departureRecord) {
           throw new ManualValidationError('error.rules.NOT_EXIST', {
             key: 'NOT_EXIST',
-            property: 'item_id',
+            property: 'itemId',
             value: collectionItem.itemId,
           });
         }
@@ -459,7 +460,7 @@ export class TransactionService {
           if (collectionItem.lotId !== arrivalRecord.lotId) {
             throw new ManualValidationError('error.LOT_ID_MISMATCH', {
               key: 'LOT_ID_MISMATCH',
-              property: 'lot_number', // 프론트로 전달 될 값이라 lot_no, lot_id => lot_number로 통일
+              property: 'lotNumber',
               value: collectionItem.lotId ?? '',
             });
           }
@@ -593,8 +594,7 @@ export class TransactionService {
   async instructShipping(
     acceptLanguage: string,
     transactionNumber: string,
-    zoneIds: number[],
-    instructedShippingItems: InstructShippingTransactionDto[],
+    instructedShippingItems: CreateShippingTransactionDto[],
   ) {
     const failures: {
       index: number;
@@ -605,12 +605,10 @@ export class TransactionService {
 
     await queryRunner.connect();
 
-    const transactionGroup = await queryRunner.manager.insert(
-      TransactionGroup,
-      {
-        transactionNumber,
-      },
-    );
+    const transactionGroup = new TransactionGroup();
+    transactionGroup.transactionNumber = transactionNumber;
+
+    await queryRunner.manager.save(TransactionGroup, transactionGroup);
 
     for (const [
       index,
@@ -621,18 +619,15 @@ export class TransactionService {
       await queryRunner.startTransaction();
 
       try {
-        const transactionDto = plainToInstance(
-          CreateTransactionDto,
-          instructedShippingDto,
-        );
+        const transaction = new Transaction();
+        transaction.transactionGroup = transactionGroup;
+        transaction.slipNumber = instructedShippingDto.slipNumber;
+        transaction.status = SlipStatus.SCHEDULED;
+        transaction.category = Category.SHIPPING;
+        transaction.inputType = InputType.WEB_OUTGOING;
+        transaction.createWorker = 'create_worker_name';
 
-        transactionDto.transactionGroupId = transactionGroup.identifiers[0].id;
-        transactionDto.status = SlipStatus.SCHEDULED;
-        transactionDto.category = Category.SHIPPING;
-        transactionDto.inputType = InputType.WEB_OUTGOING;
-        transactionDto.createWorker = 'create_worker_name';
-
-        const validationErrors = await this.i18n.validate(transactionDto, {
+        const validationErrors = await this.i18n.validate(transaction, {
           lang: acceptLanguage,
         });
 
@@ -656,26 +651,18 @@ export class TransactionService {
           });
         }
 
-        const transaction = await queryRunner.manager.insert(
-          Transaction,
-          transactionDto,
-        );
-        const transactionId = transaction.identifiers[0].id;
+        await queryRunner.manager.save(Transaction, transaction);
 
-        for (const zoneId of zoneIds) {
-          const createTransactionZoneDto: CreateTransactionZoneDto = {
-            transactionId: transactionId,
-            zoneId,
-          };
-
-          await queryRunner.manager.insert(
-            TransactionZone,
-            createTransactionZoneDto,
-          );
-        }
-
-        const transactionB2cOrder = order;
-        transactionB2cOrder.transactionId = transactionId;
+        const transactionB2cOrder = new TransactionB2cOrder();
+        transactionB2cOrder.transaction = transaction;
+        transactionB2cOrder.number = order.number;
+        transactionB2cOrder.shopId = order.shopId;
+        transactionB2cOrder.recipient = order.recipient;
+        transactionB2cOrder.contact = order.contact;
+        transactionB2cOrder.postCode = order.postCode;
+        transactionB2cOrder.address = order.address;
+        transactionB2cOrder.detailAddress = order.detailAddress;
+        transactionB2cOrder.orderedAt = order.orderedAt;
 
         const transactionB2cOrderValidationErrors = await this.i18n.validate(
           transactionB2cOrder,
@@ -702,7 +689,7 @@ export class TransactionService {
           });
         }
 
-        await queryRunner.manager.insert(
+        await queryRunner.manager.save(
           TransactionB2cOrder,
           transactionB2cOrder,
         );
@@ -715,16 +702,21 @@ export class TransactionService {
           if (!itemEntity) {
             throw new ManualValidationError('error.rules.NOT_EXIST', {
               key: 'NOT_EXIST',
-              property: 'item_id',
-              value: item.id,
+              property: 'itemId',
+              value: item.itemId,
             });
           }
 
-          item.transactionId = transactionId;
-          item.status = StockStatus.NORMAL;
+          const transactionItem = new TransactionItem();
+          transactionItem.transaction = transaction;
+          transactionItem.item = itemEntity;
+          transactionItem.status = StockStatus.NORMAL;
+          transactionItem.quantity = item.quantity;
+          transactionItem.price = item.price;
+          transactionItem.remark = item.remark;
 
           const transactionItemValidationErrors = await this.i18n.validate(
-            item,
+            transactionItem,
             {
               lang: acceptLanguage,
             },
@@ -750,7 +742,7 @@ export class TransactionService {
             });
           }
 
-          await queryRunner.manager.insert(TransactionItem, item);
+          await queryRunner.manager.save(TransactionItem, transactionItem);
         }
 
         await queryRunner.commitTransaction();
@@ -786,14 +778,9 @@ export class TransactionService {
   //   console.log(shipItemDto);
   // }
 
+  // 입출고 및 이동 내역
   async findAll(query: PaginateQuery, findTransactionDto: FindTransactionDto) {
-    const { include, startDate, endDate, category, itemName } =
-      findTransactionDto;
-
-    // 출고지시
-    if (include === 'shipping_instruction') {
-      return await this.getManyShippingInstructionList(findTransactionDto);
-    }
+    const { startDate, endDate, category, itemName } = findTransactionDto;
 
     const config: PaginateConfig<Transaction> = {
       loadEagerRelations: true,
@@ -828,22 +815,10 @@ export class TransactionService {
     return paginate(query, this.transactionRepository, config);
   }
 
-  async getManyShippingInstructionList(findTransactionDto: FindTransactionDto) {
-    const {
-      startDate,
-      endDate,
-      category,
-      status,
-      itemName,
-      recipient,
-      contact,
-      createdAt,
-      completedAt,
-      slipNumber,
-      number,
-      orderType,
-      ids,
-    } = findTransactionDto;
+  async getManyShippingList(
+    findTransactionDto: FindTransactionDto,
+    paginateDto?: PaginateDto,
+  ) {
     const queryBuilder =
       this.transactionRepository.createQueryBuilder('transaction');
 
@@ -856,15 +831,35 @@ export class TransactionService {
       'transactionItem',
     );
     queryBuilder.leftJoinAndSelect('transactionItem.item', 'item');
+    queryBuilder.leftJoinAndSelect('item.itemCodes', 'itemCode');
+    queryBuilder.leftJoinAndSelect('item.itemSerials', 'itemSerial');
+    queryBuilder.leftJoinAndSelect(
+      'transactionItem.stockAllocations',
+      'stockAllocation',
+    );
+    queryBuilder.leftJoinAndSelect('stockAllocation.location', 'location');
+    queryBuilder.leftJoinAndSelect('location.zone', 'zone');
+    queryBuilder.leftJoinAndSelect('stockAllocation.lot', 'lot');
     queryBuilder.leftJoinAndSelect(
       'transaction.transactionB2cOrder',
       'transactionB2cOrder',
     );
-    queryBuilder.leftJoinAndSelect(
-      'transaction.transactionZones',
-      'transactionZone',
-    );
-    queryBuilder.leftJoinAndSelect('transactionZone.zone', 'zone');
+    queryBuilder.leftJoinAndSelect('transactionB2cOrder.shop', 'shop');
+
+    const {
+      dateType,
+      startDate,
+      endDate,
+      category,
+      status,
+      itemName,
+      recipient,
+      contact,
+      slipNumber,
+      number,
+      orderType,
+      ids,
+    } = findTransactionDto;
 
     category &&
       queryBuilder.andWhere('transaction.category = :category', {
@@ -878,21 +873,21 @@ export class TransactionService {
     if (ids) {
       queryBuilder.andWhere(`transaction.id IN (${ids})`);
 
-      return queryBuilder.getMany();
+      return await queryBuilder.getMany();
     }
 
-    createdAt &&
+    dateType == 'createdAt' &&
       startDate &&
       endDate &&
       queryBuilder.andWhere(
-        'transaction.created_at BETWEEN :startDate AND :endDate',
+        'transaction.createdAt BETWEEN :startDate AND :endDate',
         { startDate, endDate },
       );
-    completedAt &&
+    dateType == 'completedAt' &&
       startDate &&
       endDate &&
       queryBuilder.andWhere(
-        'transaction.completed_at BETWEEN :startDate AND :endDate',
+        'transaction.completedAt BETWEEN :startDate AND :endDate',
         { startDate, endDate },
       );
     slipNumber &&
@@ -904,15 +899,15 @@ export class TransactionService {
         itemName: `%${itemName}%`,
       });
     number &&
-      queryBuilder.andWhere('transaction_b2c_order.number like :number', {
+      queryBuilder.andWhere('transactionB2cOrder.number like :number', {
         number: `%${number}%`,
       });
     recipient &&
-      queryBuilder.andWhere('transaction_b2c_order.recipient like :recipient', {
+      queryBuilder.andWhere('transactionB2cOrder.recipient like :recipient', {
         recipient: `%${recipient}%`,
       });
     contact &&
-      queryBuilder.andWhere('transaction_b2c_order.contact like :contact', {
+      queryBuilder.andWhere('transactionB2cOrder.contact like :contact', {
         contact: `%${contact}%`,
       });
 
@@ -932,33 +927,31 @@ export class TransactionService {
       queryBuilder.andWhere(`transaction.id IN (${subQuery.getQuery()})`);
     }
 
-    queryBuilder.orderBy({ 'transaction.createdAt': 'DESC' });
+    if (paginateDto && paginateDto.sortBy) {
+      paginateDto.sortBy.forEach(([field, orderBy]) => {
+        queryBuilder.addOrderBy(field, orderBy as 'ASC' | 'DESC');
+      });
+    } else {
+      queryBuilder.orderBy({ 'transaction.createdAt': 'DESC' });
+    }
 
     return await queryBuilder.getMany();
   }
 
-  async findOne(id: number, include: string) {
+  async findOne(id: number) {
     const filters: any = {
       relations: {
+        transactionGroup: true,
         transactionItems: {
-          item: true,
-          supplier: true,
-          operationType: true,
-          locationDeparture: { zone: true },
-          locationArrival: { zone: true },
+          item: {
+            itemCodes: true,
+            itemSerials: true,
+          },
+          stockAllocations: { location: { zone: true }, lot: true },
         },
+        transactionB2cOrder: { shop: true },
       },
     };
-
-    // 출고지시
-    if (include === 'shipping_instruction') {
-      filters.relations = {
-        transactionGroup: true,
-        transactionItems: { item: true },
-        transactionB2cOrder: true,
-        transactionZones: { zone: true },
-      };
-    }
 
     filters.where = { id };
 
@@ -1060,5 +1053,324 @@ export class TransactionService {
       ],
       constraints: {},
     };
+  }
+
+  async allocateToStock(
+    acceptLanguage: string,
+    transaction,
+    inventoryItems,
+    stockAllocationRules,
+  ) {
+    inventoryItems = inventoryItems.map(
+      (item: { availableQuantity: number }) => ({
+        ...item,
+        originalQuantity: item.availableQuantity,
+      }),
+    );
+
+    const failures: any[] = [];
+    const transactionShopId = transaction.transactionB2cOrder.shopId;
+    const transactionItems = transaction.transactionItems;
+    const transactionItemsLength = transactionItems.length;
+    const transactionItemIds: number[] = [];
+    let allocations: StockAllocated[] = [];
+    let detailErrors: any[] = [];
+    let isAllocationSuccessCount = 0; // 완전 할당 count
+
+    for (const transactionItem of transactionItems) {
+      transactionItemIds.push(transactionItem.id);
+      let remainingQuantity = transactionItem.quantity;
+
+      // 품목 별 재고 filtering
+      let filteredInventoryItems = inventoryItems.filter(
+        (inventoryItem: { itemId: number }) =>
+          inventoryItem.itemId === transactionItem.itemId,
+      );
+
+      if (!filteredInventoryItems || filteredInventoryItems.length === 0) {
+        // 재고 전부 소진해서 없을 때 체크
+        detailErrors.push({
+          item: {
+            name: transactionItem.item.name,
+          },
+          quantity: transactionItem.quantity,
+          error: this.i18n.t('error.STOCK_SHORTAGE', {
+            lang: acceptLanguage,
+          }),
+        });
+
+        continue;
+      }
+
+      // 재고할당 룰 순회
+      stockAllocationRules: for (const rule of stockAllocationRules) {
+        filteredInventoryItems = await this.filterInventoryItems(
+          filteredInventoryItems,
+          rule,
+          transactionShopId,
+        );
+
+        if (!filteredInventoryItems || filteredInventoryItems.length === 0) {
+          continue;
+        }
+
+        for (const filteredInventoryItem of filteredInventoryItems) {
+          if (
+            filteredInventoryItem.itemId !== transactionItem.itemId ||
+            filteredInventoryItem.availableQuantity === 0
+          ) {
+            continue;
+          }
+
+          const allocatedQuantity = Math.min(
+            filteredInventoryItem.availableQuantity,
+            remainingQuantity,
+          );
+
+          // 재고 차감
+          filteredInventoryItem.availableQuantity -= allocatedQuantity;
+          remainingQuantity -= allocatedQuantity;
+
+          const stockAllocated = new StockAllocated();
+          stockAllocated.transactionItem = transactionItem;
+          stockAllocated.item = transactionItem.item;
+          stockAllocated.locationId = filteredInventoryItem.locationId;
+          stockAllocated.lotId = filteredInventoryItem.lotId;
+          stockAllocated.quantity = allocatedQuantity;
+
+          allocations.push(stockAllocated);
+
+          // 한 품목에 재고할당이 완료되면 다음 품목으로 이동
+          if (remainingQuantity === 0) {
+            isAllocationSuccessCount++;
+            break stockAllocationRules;
+          }
+        }
+      }
+
+      // 한 품목에 재고할당이 온전히 되지 않은 경우 => 할당 실패
+      if (remainingQuantity > 0) {
+        allocations = allocations.filter((allocation) => {
+          if (allocation.transactionItem.id === transactionItem.id) {
+            const relatedInventoryItem = inventoryItems.find(
+              (item: {
+                itemId: number;
+                locationId: number;
+                lotId: number | null | undefined;
+              }) =>
+                item.itemId === allocation.itemId &&
+                item.locationId === allocation.locationId &&
+                item.lotId === allocation.lotId,
+            );
+
+            if (relatedInventoryItem) {
+              relatedInventoryItem.availableQuantity += allocation.quantity;
+            }
+
+            return false;
+          }
+
+          return true;
+        });
+
+        detailErrors.push({
+          item: {
+            name: transactionItem.item.name,
+          },
+          quantity: transactionItem.quantity,
+          error: this.i18n.t('error.STOCK_SHORTAGE', {
+            lang: acceptLanguage,
+          }),
+        });
+      }
+    }
+
+    if (detailErrors.length > 0) {
+      failures.push({
+        slipNumber: transaction.slipNumber,
+        transactionB2cOrder: {
+          recipient: transaction.transactionB2cOrder.recipient,
+        },
+        transactionItems: detailErrors,
+        createdAt: transaction.createdAt,
+      });
+
+      detailErrors = [];
+    }
+
+    // 모든 품목이 온전히 할당 됐을 때, 전표상태 변경
+    // 출고에정(SlipStatus.SCHEDULED) -> 할당완료(SlipStatus.ALLOCATED)
+    if (transactionItemsLength === isAllocationSuccessCount) {
+      transaction.status = SlipStatus.ALLOCATED;
+    } else {
+      allocations = allocations.filter(
+        (allocation) =>
+          !transactionItemIds.includes(allocation.transactionItem.id),
+      );
+    }
+
+    await this.transactionRepository.save(transaction);
+
+    const batchSize = 500;
+    const allocationsLength = allocations.length;
+    for (let i = 0; i < allocationsLength; i += batchSize) {
+      const allocation = allocations.slice(i, i + batchSize);
+      await this.stockAllocatedRepository.save(allocation);
+    }
+
+    return failures;
+  }
+
+  private async filterInventoryItems(
+    filteredInventoryItems: any[],
+    rule: {
+      stockAllocationRuleShops: StockAllocationRuleShop[];
+      stockAllocationRuleZones: StockAllocationRuleZone[];
+      zoneFilter: ZoneFilter;
+      method: StockAllocationMethod;
+    },
+    transactionShopId: number,
+  ) {
+    const ruleShops = rule.stockAllocationRuleShops;
+    const ruleZones = rule.stockAllocationRuleZones;
+
+    // 선택 된 판매처(shop) 탐색
+    if (ruleShops.length > 0) {
+      const isShopIncluded = ruleShops.some(
+        (ruleShop: { shopId: number }) => ruleShop.shopId === transactionShopId,
+      );
+
+      if (!isShopIncluded) {
+        return filteredInventoryItems;
+      }
+    }
+
+    // 선택 된 존(zone) 탐색
+    if (ruleZones.length > 0) {
+      if (rule.zoneFilter === ZoneFilter.INCLUDE) {
+        filteredInventoryItems = filteredInventoryItems.filter(
+          (inventoryItem: { zoneId: number }) =>
+            ruleZones.some(
+              (ruleZone: { zoneId: number }) =>
+                ruleZone.zoneId === inventoryItem.zoneId,
+            ),
+        );
+      } else if (rule.zoneFilter === ZoneFilter.EXCLUDE) {
+        filteredInventoryItems = filteredInventoryItems.filter(
+          (inventoryItem: { zoneId: number }) =>
+            !ruleZones.some(
+              (ruleZone: { zoneId: number }) =>
+                ruleZone.zoneId === inventoryItem.zoneId,
+            ),
+        );
+      }
+    }
+
+    // 할당 방식 sorting
+    if (rule.method == StockAllocationMethod.FEFO) {
+      filteredInventoryItems = filteredInventoryItems.sort(
+        (
+          a: { lot: { expirationDate: Date } },
+          b: { lot: { expirationDate: Date } },
+        ) => {
+          const dateA = a.lot?.expirationDate;
+          const dateB = b.lot?.expirationDate;
+
+          if (dateA === dateB) return 0;
+          if (dateA === null) return 1;
+          if (dateB === null) return -1;
+
+          return (
+            new Date(dateA as Date).getTime() -
+            new Date(dateB as Date).getTime()
+          );
+        },
+      );
+    } else if (rule.method == StockAllocationMethod.LPR) {
+      filteredInventoryItems = filteredInventoryItems.sort(
+        (a: { quantity: number }, b: { quantity: number }) => {
+          const quantityA = a.quantity;
+          const quantityB = b.quantity;
+
+          if (quantityA === quantityB) return 0;
+          if (quantityA === null) return 1;
+          if (quantityB === null) return -1;
+
+          return quantityA - quantityB;
+        },
+      );
+    }
+
+    return filteredInventoryItems;
+  }
+
+  async deallocateToStock(transaction: Transaction) {
+    const transactionItemIds = transaction.transactionItems.map(
+      (item) => item.id,
+    );
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      this.stockAllocatedRepository.delete({
+        transactionItemId: In(transactionItemIds),
+      });
+
+      transaction.status = SlipStatus.SCHEDULED;
+      await this.transactionRepository.save(transaction);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+
+      throw new InternalServerErrorException(error);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async patchBulk(
+    transactions: Transaction[],
+    updateTransactionDto: UpdateTransactionDto,
+  ) {
+    const { status } = updateTransactionDto;
+
+    if (status) {
+      const status = Object.keys(SlipStatus).find(
+        (key) => SlipStatus[key] === updateTransactionDto.status,
+      );
+
+      // const transactionIds = transactions.map((transaction) => transaction.id);
+
+      // await this.transactionRepository.update(
+      //   { id: In(transactionIds) },
+      //   { status: SlipStatus[status as SlipStatus] },
+      // );
+
+      transactions.forEach((transaction) => {
+        transaction.status = status as SlipStatus;
+      });
+    }
+
+    await this.transactionRepository.save(transactions);
+  }
+
+  async patch(
+    transaction: Transaction,
+    updateTransactionDto: UpdateTransactionDto,
+  ) {
+    const { status } = updateTransactionDto;
+
+    if (status) {
+      const status = Object.keys(SlipStatus).find(
+        (key) => SlipStatus[key] === updateTransactionDto.status,
+      );
+
+      transaction.status = status as SlipStatus;
+    }
+
+    await this.transactionRepository.save(transaction);
   }
 }

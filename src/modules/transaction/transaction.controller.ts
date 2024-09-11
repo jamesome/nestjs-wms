@@ -15,11 +15,13 @@ import {
   Inject,
   ParseBoolPipe,
   InternalServerErrorException,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiHeader,
   ApiNoContentResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
@@ -34,24 +36,28 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileService } from 'src/services/file.service';
 import { TransactionService } from './transaction.service';
+import { InventoryItemService } from '../inventory-item/inventory-item.service';
+import { ManualValidationError } from 'src/common/errors/manual-validation-error';
+import { CustomHttpException } from 'src/common/exceptions/custom-http.exception';
 import { ItemCode } from '../item-code/entities/item-code.entity';
 import { Location } from '../location/entities/location.entity';
 import { Supplier } from '../supplier/entities/supplier.entity';
 import { OperationType } from '../operation-type/entities/operation-type.entity';
-import { Category, StockStatus } from '../enum';
+import { InventoryItem } from '../inventory-item/entities/inventory-item.entity';
+import { StockAllocationRule } from '../stock-allocation-rule/entities/stock-allocation-rule.entity';
+import { Lot } from '../lot/entities/lot.entity';
+import { Category, SlipStatus, StockStatus } from '../enum';
 import { TransactionEvent } from './events/transaction.event';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { FindTransactionDto } from './dto/find-transaction.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { IndexedCollectionItemDto } from '../inventory-item/dto/index-collection-item.dto';
-import { ReceiveItemDto } from '../inventory-item/dto/receive-item.dto';
-import { MoveItemDto } from '../inventory-item/dto/move-item.dto';
-import { Lot } from '../lot/entities/lot.entity';
-import { InstructShippingTransactionDto } from './dto/instruct-shipping-transaction.dto';
-import { ManualValidationError } from 'src/common/errors/manual-validation-error';
-import { InventoryItem } from '../inventory-item/entities/inventory-item.entity';
+import { ReceiveInventoryItemDto } from '../inventory-item/dto/receive-inventory-item.dto';
+import { MoveInventoryItemDto } from '../inventory-item/dto/move-inventory-item.dto';
+import { CreateShippingTransactionDto } from './dto/create-shipping-transaction.dto';
+import { PaginateDto } from '../paginate.dto';
 
-@Controller('transactions')
+@Controller(['transactions', 'warehouses/:warehouseId/transactions'])
 @ApiTags('Transaction API')
 @ApiHeader({
   name: 'Accept-Language',
@@ -64,11 +70,13 @@ export class TransactionController {
   private operationTypeRepository: Repository<OperationType>;
   private lotRepository: Repository<Lot>;
   private inventoryItemRepository: Repository<InventoryItem>;
+  private stockAllocationRuleRepository: Repository<StockAllocationRule>;
 
   constructor(
     @Inject(CONNECTION) private readonly dataSource: DataSource,
     private readonly i18n: I18nService,
     private readonly transactionService: TransactionService,
+    private readonly inventoryItemService: InventoryItemService,
     private readonly fileService: FileService,
     private eventEmitter: EventEmitter2,
   ) {
@@ -78,6 +86,8 @@ export class TransactionController {
     this.operationTypeRepository = this.dataSource.getRepository(OperationType);
     this.lotRepository = this.dataSource.getRepository(Lot);
     this.inventoryItemRepository = this.dataSource.getRepository(InventoryItem);
+    this.stockAllocationRuleRepository =
+      this.dataSource.getRepository(StockAllocationRule);
   }
 
   @Post()
@@ -88,68 +98,84 @@ export class TransactionController {
 
   @Post('receiving')
   @ApiOperation({ summary: '입고' })
-  @ApiCreatedResponse({ description: 'Created' })
+  @ApiOkResponse()
   @UseInterceptors(new PartialResponseInterceptor())
-  async receive(@Req() request: Request, @Body('data') data: ReceiveItemDto[]) {
+  async receive(
+    @Req() request: Request,
+    @Body('data') data: ReceiveInventoryItemDto[],
+  ) {
     let globalIndex = 0;
 
     const receivedItems = data.map((collectionItem) => ({
       index: globalIndex++,
-      collectionItem: plainToInstance(ReceiveItemDto, collectionItem),
+      collectionItem: plainToInstance(ReceiveInventoryItemDto, collectionItem),
     }));
 
-    return await this.transactionService.receive(
+    const result = await this.transactionService.receive(
       request.header('accept-Language') as string,
       request.header('x-client-id') as string,
       receivedItems,
     );
+
+    return {
+      requested: data.length,
+      result,
+    };
   }
 
   @Post('movement')
   @ApiOperation({ summary: '이동' })
-  @ApiCreatedResponse({ description: 'Created' })
+  @ApiOkResponse()
   @UseInterceptors(new PartialResponseInterceptor())
-  async move(@Req() request: Request, @Body('data') data: MoveItemDto[]) {
+  async move(
+    @Req() request: Request,
+    @Body('data') data: MoveInventoryItemDto[],
+  ) {
     let globalIndex = 0;
 
     const movedItems = data.map((collectionItem) => ({
       index: globalIndex++,
-      collectionItem: plainToInstance(MoveItemDto, collectionItem),
+      collectionItem: plainToInstance(MoveInventoryItemDto, collectionItem),
     }));
 
-    return await this.transactionService.move(
+    const result = await this.transactionService.move(
       request.header('accept-Language') as string,
       request.header('x-client-id') as string,
       movedItems,
     );
+
+    return {
+      requested: data.length,
+      result,
+    };
   }
 
   @Post('shipping-instruct')
   @ApiOperation({ summary: '출고지시' })
-  @ApiCreatedResponse({ description: 'Created' })
+  @ApiOkResponse()
   @UseInterceptors(new PartialResponseInterceptor())
   async instructShipping(
     @Req() request: Request,
-    @Body('transaction_number') transactionNumber: string,
-    @Body('zone_ids') zoneIds: number[],
-    @Body('data') data: InstructShippingTransactionDto[],
+    @Body('transactionNumber') transactionNumber: string,
+    @Body('data') data: CreateShippingTransactionDto[],
   ) {
-    const instructedItems = plainToInstance(
-      InstructShippingTransactionDto,
-      data,
-    );
+    const instructedItems = plainToInstance(CreateShippingTransactionDto, data);
 
-    return await this.transactionService.instructShipping(
+    const result = await this.transactionService.instructShipping(
       request.header('accept-Language') as string,
       transactionNumber,
-      zoneIds,
       instructedItems,
     );
+
+    return {
+      requested: data.length,
+      result,
+    };
   }
 
   // @Post('shipping')
   // @ApiOperation({ summary: '출고' })
-  // @ApiCreatedResponse({ description: 'Created' })
+  // @ApiOkResponse()
   // @UseInterceptors(new PartialResponseInterceptor())
   // async ship(@Req() request: Request, @Body('data') data: ShipItemDto[]) {
   //   return await this.transactionService.ship(request, data);
@@ -160,12 +186,20 @@ export class TransactionController {
     @Paginate() query: PaginateQuery,
     @Query() findTransactionDto: FindTransactionDto,
   ) {
+    // 출고예정정보 내역, 출고지시 내역
+    // TODO: 출고~ 내역에서 status가 없을 때 어떻게 할지
+    if (findTransactionDto.status && findTransactionDto.status.length > 0) {
+      return await this.transactionService.getManyShippingList(
+        findTransactionDto,
+      );
+    }
+
     return await this.transactionService.findAll(query, findTransactionDto);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number, @Query('include') include: string) {
-    return await this.transactionService.findOne(id, include);
+  async findOne(@Param('id') id: number) {
+    return await this.transactionService.findOne(id);
   }
 
   @Put(':id')
@@ -190,24 +224,24 @@ export class TransactionController {
       }),
     )
     file: Express.Multer.File,
-    @Body('header_mapping') headerMapping: string,
-    @Body('is_header', ParseBoolPipe) isHeader: boolean,
+    @Body('headerMapping') headerMapping: string,
+    @Body('isHeader', ParseBoolPipe) isHeader: boolean,
   ) {
     const headers = JSON.parse(headerMapping);
     const acceptLanguage = request.header('accept-Language') as string;
     const failures: any[] = [];
 
     const {
-      location_departure_name: locationDepartureName,
-      // location_arrival_name: locationArrivalNameHeader,
-      item_code: itemCodeHeader,
-      // item_name: itemNameHeader,
-      // item_property: itemPropertyHeader,
-      item_serial: itemSerialHeader,
-      supplier_name: supplierNameHeader,
-      lot_number: lotNumberHeader,
-      expiration_date: expirationDateHeader,
-      operation_type_name: operationTypeNameHeader,
+      locationDepartureName: locationDepartureName,
+      // locationArrivalName: locationArrivalNameHeader,
+      itemCode: itemCodeHeader,
+      // itemName: itemNameHeader,
+      // itemProperty: itemPropertyHeader,
+      itemSerial: itemSerialHeader,
+      supplierName: supplierNameHeader,
+      lotNumber: lotNumberHeader,
+      expirationDate: expirationDateHeader,
+      operationTypeName: operationTypeNameHeader,
       quantity: quantityHeader,
       status: statusHeader,
       remark: remarkHeader,
@@ -216,7 +250,7 @@ export class TransactionController {
     const fileData = await this.fileService.fileToJson(file, isHeader);
     const indexedCollectionItems: {
       index: number;
-      collectionItem: ReceiveItemDto;
+      collectionItem: ReceiveInventoryItemDto;
     }[] = [];
 
     // 모든 데이터를 DB 조회하지 않고, 중복 된 데이터인 경우 caching 된 데이터를 활용
@@ -227,9 +261,9 @@ export class TransactionController {
 
     const receivedItems = await this.preProcessing(fileData);
     const total = receivedItems.length;
-    console.log(receivedItems);
+
     for (const index in receivedItems) {
-      const collectionItem = new ReceiveItemDto();
+      const collectionItem = new ReceiveInventoryItemDto();
       const receivedItem = receivedItems[index]['collectionItem'];
 
       try {
@@ -238,8 +272,8 @@ export class TransactionController {
         if (!itemCode) {
           throw new ManualValidationError('error.rules.IS_NOT_EMPTY', {
             error: 'IS_NOT_EMPTY',
-            key: 'item_code',
-            property: isHeader ? 'item_code' : itemCodeHeader,
+            key: 'itemCode',
+            property: isHeader ? 'itemCode' : itemCodeHeader,
           });
         }
 
@@ -253,8 +287,8 @@ export class TransactionController {
           if (!itemCodeEntity) {
             throw new ManualValidationError('error.rules.NOT_EXIST', {
               error: 'NOT_EXIST',
-              key: 'item_code',
-              property: isHeader ? 'item_code' : itemCodeHeader,
+              key: 'itemCode',
+              property: isHeader ? 'itemCode' : itemCodeHeader,
             });
           }
 
@@ -268,9 +302,9 @@ export class TransactionController {
         if (!locationName) {
           throw new ManualValidationError('error.rules.IS_NOT_EMPTY', {
             error: 'IS_NOT_EMPTY',
-            key: 'location_departure_name',
+            key: 'locationDepartureName',
             property: isHeader
-              ? 'location_departure_name'
+              ? 'locationDepartureName'
               : locationDepartureName,
           });
         }
@@ -285,8 +319,8 @@ export class TransactionController {
           if (!locationEntity) {
             throw new ManualValidationError('error.rules.NOT_EXIST', {
               error: 'NOT_EXIST',
-              key: 'location_name',
-              property: isHeader ? 'location_name' : locationDepartureName,
+              key: 'locationName',
+              property: isHeader ? 'locationName' : locationDepartureName,
             });
           }
 
@@ -300,8 +334,8 @@ export class TransactionController {
         if (!supplierName) {
           throw new ManualValidationError('error.rules.IS_NOT_EMPTY', {
             error: 'IS_NOT_EMPTY',
-            key: 'supplier_name',
-            property: isHeader ? 'supplier_name' : supplierNameHeader,
+            key: 'supplierName',
+            property: isHeader ? 'supplierName' : supplierNameHeader,
           });
         }
 
@@ -315,8 +349,8 @@ export class TransactionController {
           if (!supplierEntity) {
             throw new ManualValidationError('error.rules.NOT_EXIST', {
               error: 'NOT_EXIST',
-              key: 'supplier_name',
-              property: isHeader ? 'supplier_name' : supplierNameHeader,
+              key: 'supplierName',
+              property: isHeader ? 'supplierName' : supplierNameHeader,
             });
           }
 
@@ -328,15 +362,13 @@ export class TransactionController {
         collectionItem.lotNo = receivedItem[lotNumberHeader];
         collectionItem.expirationDate = receivedItem[expirationDateHeader];
 
-        // operation_type_name
+        // operationTypeName
         const operationTypeName = receivedItem[operationTypeNameHeader];
         if (!operationTypeName) {
           throw new ManualValidationError('error.rules.IS_NOT_EMPTY', {
             error: 'IS_NOT_EMPTY',
-            key: 'operation_type_name',
-            property: isHeader
-              ? 'operation_type_name'
-              : operationTypeNameHeader,
+            key: 'operationTypeName',
+            property: isHeader ? 'operationTypeName' : operationTypeNameHeader,
           });
         }
 
@@ -355,9 +387,9 @@ export class TransactionController {
           ) {
             throw new ManualValidationError('error.rules.NOT_EXIST', {
               error: 'NOT_EXIST',
-              key: 'operation_type_name',
+              key: 'operationTypeName',
               property: isHeader
-                ? 'operation_type_name'
+                ? 'operationTypeName'
                 : operationTypeNameHeader,
             });
           }
@@ -430,7 +462,11 @@ export class TransactionController {
     await this.fileService.moveFile(file, request.params.domain, 'receiving');
 
     const combinedResults = [...failures, ...result];
-    return combinedResults.length ? combinedResults : '';
+
+    return {
+      requested: receivedItems.length ?? 0,
+      result: combinedResults,
+    };
   }
 
   @Post('movement:import')
@@ -453,16 +489,16 @@ export class TransactionController {
     const failures: any[] = [];
 
     const {
-      location_departure_name: locationDepartureName,
-      location_arrival_name: locationArrivalNameHeader,
-      item_code: itemCodeHeader,
-      // item_name: itemNameHeader,
-      // item_property: itemPropertyHeader,
-      // item_serial: itemSerialHeader,
-      // supplier_name: supplierNameHeader,
-      lot_number: lotNumberHeader,
-      // expiration_date: expirationDateHeader,
-      operation_type_name: operationTypeNameHeader,
+      locationDepartureName: locationDepartureName,
+      locationArrivalName: locationArrivalNameHeader,
+      itemCode: itemCodeHeader,
+      // itemName: itemNameHeader,
+      // itemProperty: itemPropertyHeader,
+      // itemSerial: itemSerialHeader,
+      // supplierName: supplierNameHeader,
+      lotNumber: lotNumberHeader,
+      // expirationDate: expirationDateHeader,
+      operationTypeName: operationTypeNameHeader,
       quantity: quantityHeader,
       status: statusHeader,
       remark: remarkHeader,
@@ -471,7 +507,7 @@ export class TransactionController {
     const fileData = await this.fileService.fileToJson(file, isHeader);
     const indexedCollectionItems: {
       index: number;
-      collectionItem: MoveItemDto;
+      collectionItem: MoveInventoryItemDto;
     }[] = [];
 
     // 모든 데이터를 DB 조회하지 않고, 중복 된 데이터인 경우 caching 된 데이터를 활용
@@ -483,7 +519,7 @@ export class TransactionController {
     const total = movedItems.length;
 
     for (const index in movedItems) {
-      const collectionItem = new MoveItemDto();
+      const collectionItem = new MoveInventoryItemDto();
       const movedItem = movedItems[index]['collectionItem'];
 
       try {
@@ -493,9 +529,9 @@ export class TransactionController {
         if (!departureLocationName) {
           throw new ManualValidationError('error.rules.IS_NOT_EMPTY', {
             error: 'IS_NOT_EMPTY',
-            key: 'location_departure_name',
+            key: 'locationDepartureName',
             property: isHeader
-              ? 'location_departure_name'
+              ? 'locationDepartureName'
               : locationDepartureName,
           });
         }
@@ -514,9 +550,9 @@ export class TransactionController {
           if (!departureLocationEntity) {
             throw new ManualValidationError('error.rules.NOT_EXIST', {
               error: 'IS_NOT_EMPTY',
-              key: 'location_departure_name',
+              key: 'locationDepartureName',
               property: isHeader
-                ? 'location_departure_name'
+                ? 'locationDepartureName'
                 : locationDepartureName,
             });
           }
@@ -531,9 +567,9 @@ export class TransactionController {
         if (!arrivalLocationName) {
           throw new ManualValidationError('error.rules.IS_NOT_EMPTY', {
             error: 'IS_NOT_EMPTY',
-            key: 'location_arrival_name',
+            key: 'locationArrivalName',
             property: isHeader
-              ? 'location_arrival_name'
+              ? 'locationArrivalName'
               : locationArrivalNameHeader,
           });
         }
@@ -549,9 +585,9 @@ export class TransactionController {
           if (!locationEntity) {
             throw new ManualValidationError('error.rules.NOT_EXIST', {
               error: 'NOT_EXIST',
-              key: 'location_arrival_name',
+              key: 'locationArrivalName',
               property: isHeader
-                ? 'location_arrival_name'
+                ? 'locationArrivalName'
                 : locationArrivalNameHeader,
             });
           }
@@ -566,8 +602,8 @@ export class TransactionController {
         if (!itemCode) {
           throw new ManualValidationError('error.rules.IS_NOT_EMPTY', {
             error: 'IS_NOT_EMPTY',
-            key: 'item_code',
-            property: isHeader ? 'item_code' : itemCodeHeader,
+            key: 'itemCode',
+            property: isHeader ? 'itemCode' : itemCodeHeader,
           });
         }
 
@@ -581,8 +617,8 @@ export class TransactionController {
           if (!itemCodeEntity) {
             throw new ManualValidationError('error.rules.NOT_EXIST', {
               error: 'NOT_EXIST',
-              key: 'item_code',
-              property: isHeader ? 'item_code' : itemCodeHeader,
+              key: 'itemCode',
+              property: isHeader ? 'itemCode' : itemCodeHeader,
             });
           }
 
@@ -599,8 +635,8 @@ export class TransactionController {
               'error.rules.NOT_EXIST_FOR_MOVING',
               {
                 error: 'NOT_EXIST_FOR_MOVING',
-                key: 'item_code',
-                property: isHeader ? 'item_code' : itemCodeHeader,
+                key: 'itemCode',
+                property: isHeader ? 'itemCode' : itemCodeHeader,
               },
             );
           }
@@ -610,15 +646,13 @@ export class TransactionController {
         }
         // ----------------------------------------------------------------
 
-        // operation_type_name
+        // operationTypeName
         const operationTypeName = movedItem[operationTypeNameHeader];
         if (!operationTypeName) {
           throw new ManualValidationError('error.rules.IS_NOT_EMPTY', {
             error: 'IS_NOT_EMPTY',
-            key: 'operation_type_name',
-            property: isHeader
-              ? 'operation_type_name'
-              : operationTypeNameHeader,
+            key: 'operationTypeName',
+            property: isHeader ? 'operationTypeName' : operationTypeNameHeader,
           });
         }
 
@@ -637,9 +671,9 @@ export class TransactionController {
           ) {
             throw new ManualValidationError('error.rules.NOT_EXIST', {
               error: 'NOT_EXIST',
-              key: 'operation_type_name',
+              key: 'operationTypeName',
               property: isHeader
-                ? 'operation_type_name'
+                ? 'operationTypeName'
                 : operationTypeNameHeader,
             });
           }
@@ -648,7 +682,7 @@ export class TransactionController {
         }
         // ----------------------------------------------------------------
 
-        // lot_number
+        // lotNumber
         const lotNumber = movedItem[lotNumberHeader];
 
         collectionItem.lotId = null;
@@ -661,8 +695,8 @@ export class TransactionController {
           if (!lotEntity) {
             throw new ManualValidationError('error.rules.NOT_EXIST', {
               error: 'NOT_EXIST',
-              key: 'lot_number',
-              property: isHeader ? 'lot_number' : lotNumberHeader,
+              key: 'lotNumber',
+              property: isHeader ? 'lotNumber' : lotNumberHeader,
             });
           }
 
@@ -726,7 +760,11 @@ export class TransactionController {
     await this.fileService.moveFile(file, request.params.domain, 'movement');
 
     const combinedResults = [...failures, ...result];
-    return combinedResults.length ? combinedResults : '';
+
+    return {
+      requested: movedItems.length ?? 0,
+      result: combinedResults,
+    };
   }
 
   private async preProcessing<T>(
@@ -736,8 +774,217 @@ export class TransactionController {
 
     return data.map((collectionItem) => ({
       index: globalIndex++,
-      collectionItem: collectionItem as ReceiveItemDto,
+      collectionItem: collectionItem as ReceiveInventoryItemDto,
     })) as IndexedCollectionItemDto<T>[];
+  }
+
+  @Post('shipping:action')
+  @UseInterceptors(new PartialResponseInterceptor())
+  async handleShippingAction(
+    @Param('action') action: string,
+    @Req() request: Request,
+    @Param('warehouseId') warehouseId: number,
+    @Body('filters') findTransactionDto: FindTransactionDto,
+    @Body('data') updateTransactionDto: UpdateTransactionDto,
+  ) {
+    if (action === ':allocate-stocks') {
+      return await this.allocateToStock(
+        request,
+        warehouseId,
+        findTransactionDto,
+      );
+    } else if (action === ':deallocate-stocks') {
+      return await this.deallocateToStock(findTransactionDto);
+    } else if (action === ':batch') {
+      return await this.patchBulk(findTransactionDto, updateTransactionDto);
+    } else {
+      throw new Error('Invalid action');
+    }
+  }
+
+  // @Post('shipping:allocate-stocks')
+  @ApiOperation({ summary: '출고지시' })
+  // @UseInterceptors(new PartialResponseInterceptor())
+  @ApiOkResponse()
+  async allocateToStock(
+    @Req() request: Request,
+    @Param('warehouseId') warehouseId: number,
+    @Body('filters') findTransactionDto: FindTransactionDto,
+  ) {
+    // 출고이면서, 작업예정 상태만 출고지시(재고할당) 가능.
+    findTransactionDto.category = Category.SHIPPING;
+    findTransactionDto.status = [SlipStatus.SCHEDULED];
+
+    const paginate = new PaginateDto();
+    paginate.sortBy = [['transaction.id', 'ASC']];
+
+    const transactions = await this.transactionService.getManyShippingList(
+      findTransactionDto,
+      paginate,
+    );
+
+    if (!transactions || transactions.length === 0) {
+      throw new CustomHttpException(
+        {
+          error: 'Not Found',
+          message: 'ENTITY_NOT_FOUND',
+          statusCode: HttpStatus.NOT_FOUND,
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // 작업 대상 확정: 총 몇개의 대상 주문을 Wave로 생성 할 것인가.
+    const targetOrders = findTransactionDto.ordersToProcess
+      ? transactions.slice(0, findTransactionDto.ordersToProcess)
+      : transactions;
+
+    let inventoryItems =
+      await this.inventoryItemService.getAvailableStockList(warehouseId);
+
+    if (!inventoryItems || inventoryItems.length === 0) {
+      throw new CustomHttpException(
+        {
+          error: 'Not Found',
+          message: 'ENTITY_NOT_FOUND',
+          statusCode: HttpStatus.NOT_FOUND,
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    inventoryItems = inventoryItems.map((item) => ({
+      ...item,
+      itemId: parseInt(item.itemId),
+      locationId: parseInt(item.locationId),
+      lotId: item.lotId ? parseInt(item.lotId) : null,
+      availableQuantity: parseInt(item.availableQuantity),
+    }));
+
+    // 재고할당 룰
+    // 1. zone 확인(선택 된 zone or 전체 zone)
+    // 2. shop 확인(선택 된 shop or 전체 shop)
+    const stockAllocationRules = await this.stockAllocationRuleRepository.find({
+      relations: {
+        shipper: true,
+        stockAllocationRuleShops: { shop: true },
+        stockAllocationRuleZones: { zone: true },
+      },
+      order: {
+        priority: 'ASC',
+      },
+    });
+
+    const result: any[] = [];
+    const transactionsLength = targetOrders.length;
+
+    for (const [i, transaction] of targetOrders.entries()) {
+      const transactionEvent = new TransactionEvent();
+      transactionEvent.id = request.header('x-client-id') as string;
+      transactionEvent.name = 'Allocate Stock Processing';
+      transactionEvent.total = transactionsLength;
+      transactionEvent.processed = i + 1;
+      this.eventEmitter.emit('transaction.allocateToStock', transactionEvent);
+
+      const failure = await this.transactionService.allocateToStock(
+        request.header('accept-Language') as string,
+        transaction,
+        inventoryItems,
+        stockAllocationRules,
+      );
+
+      if (failure.length > 0) {
+        result.push(...failure);
+      }
+    }
+
+    return {
+      requested: targetOrders.length,
+      result,
+    };
+  }
+
+  // @Post('shipping:deallocate-stocks')
+  @ApiOperation({ summary: '출고지시 취소' })
+  // @UseInterceptors(new PartialResponseInterceptor())
+  @ApiOkResponse()
+  async deallocateToStock(
+    @Body('filters') findTransactionDto: FindTransactionDto,
+  ) {
+    // 출고이면서, 할당완료 상태만 출고지시 취소(재고할당 취소) 가능.
+    findTransactionDto.category = Category.SHIPPING;
+    findTransactionDto.status = [SlipStatus.ALLOCATED];
+
+    const transactions =
+      await this.transactionService.getManyShippingList(findTransactionDto);
+
+    if (!transactions || transactions.length === 0) {
+      throw new CustomHttpException(
+        {
+          error: 'Not Found',
+          message: 'ENTITY_NOT_FOUND',
+          statusCode: HttpStatus.NOT_FOUND,
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const result: any[] = [];
+
+    for (const transaction of transactions) {
+      await this.transactionService.deallocateToStock(transaction);
+    }
+
+    return {
+      requested: transactions?.length ?? 0,
+      result,
+    };
+  }
+
+  @Patch('shipping:batch')
+  async patchBulk(
+    @Body('filters') findTransactionDto: FindTransactionDto,
+    @Body('data') updateTransactionDto: UpdateTransactionDto,
+  ) {
+    const transactions =
+      await this.transactionService.getManyShippingList(findTransactionDto);
+
+    if (!transactions || transactions.length === 0) {
+      throw new CustomHttpException(
+        {
+          error: 'Not Found',
+          message: 'ENTITY_NOT_FOUND',
+          statusCode: HttpStatus.NOT_FOUND,
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return this.transactionService.patchBulk(
+      transactions,
+      updateTransactionDto,
+    );
+  }
+
+  @Patch('shipping/:id')
+  async patch(
+    @Param('id') id: number,
+    @Body('data') updateTransactionDto: UpdateTransactionDto,
+  ) {
+    const transaction = await this.transactionService.findOne(id);
+
+    if (!transaction) {
+      throw new CustomHttpException(
+        {
+          error: 'Not Found',
+          message: 'ENTITY_NOT_FOUND',
+          statusCode: HttpStatus.NOT_FOUND,
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return this.transactionService.patch(transaction, updateTransactionDto);
   }
 }
 

@@ -22,6 +22,7 @@ export const EntityByIdPipe = (entityClass: EntityClassOrSchema) => {
       const entity = await repository.findOneBy({ id });
 
       if (!entity) {
+        // 어떤 entity 조회 시 실패했는디 알려주는 디테일?
         throw new NotFoundException(`Entity with id ${id} not found`);
       }
 

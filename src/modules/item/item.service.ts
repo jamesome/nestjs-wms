@@ -4,10 +4,10 @@ import { CONNECTION } from 'src/common/constants';
 import { paginate, PaginateConfig, PaginateQuery } from 'nestjs-paginate';
 import { Item } from './entities/item.entity';
 import { ItemCode } from '../item-code/entities/item-code.entity';
-import { FindItemDto } from './dto/find-item.dto';
 import { InventoryItem } from '../inventory-item/entities/inventory-item.entity';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { FindItemDto } from './dto/find-item.dto';
 
 @Injectable()
 export class ItemService {
@@ -18,15 +18,15 @@ export class ItemService {
   }
 
   async create(createItemDto: CreateItemDto) {
-    const item = this.itemRepository.create({
-      name: createItemDto.name,
-      property: createItemDto.property,
-      itemCodes: createItemDto.itemCodes.map((codeDto) => {
-        const itemCode = new ItemCode();
-        itemCode.code = codeDto.code;
+    const item = new Item();
+    item.shipperId = 1; // TODO: 개선필요
+    item.name = createItemDto.name;
+    item.property = createItemDto.property;
+    item.itemCodes = createItemDto.itemCodes.map((codeDto) => {
+      const itemCode = new ItemCode();
+      itemCode.code = codeDto.code;
 
-        return itemCode;
-      }),
+      return itemCode;
     });
 
     return await this.itemRepository.save(item);
@@ -65,8 +65,8 @@ export class ItemService {
         'item.name',
         'item.property',
         'item.createdAt',
-        'item_code.id',
-        'item_code.code',
+        'itemCode.id',
+        'itemCode.code',
         'supplier.id',
         'supplier.name',
         'item_serial.id',
@@ -77,75 +77,75 @@ export class ItemService {
       ])
       .addSelect((subQuery) => {
         return subQuery
-          .select('SUM(inventory_item.quantity)', 'quantityTotal')
-          .from(InventoryItem, 'inventory_item')
-          .where('inventory_item.item_id = item.id')
-          .andWhere('inventory_item.status <> "disposed"');
+          .select('SUM(inventoryItem.quantity)', 'quantityTotal')
+          .from(InventoryItem, 'inventoryItem')
+          .where('inventoryItem.item_id = item.id')
+          .andWhere('inventoryItem.status <> "disposed"');
       }, 'quantityTotal')
       .addSelect((subQuery) => {
         return subQuery
-          .select('SUM(inventory_item.quantity)', 'quantityAvailable')
-          .from(InventoryItem, 'inventory_item')
-          .where('inventory_item.item_id = item.id')
-          .andWhere('inventory_item.status = "normal"');
+          .select('SUM(inventoryItem.quantity)', 'quantityAvailable')
+          .from(InventoryItem, 'inventoryItem')
+          .where('inventoryItem.item_id = item.id')
+          .andWhere('inventoryItem.status = "normal"');
       }, 'quantityAvailable')
       .addSelect((subQuery) => {
         return subQuery
-          .select('SUM(inventory_item.quantity)', 'quantityNonAvailable')
-          .from(InventoryItem, 'inventory_item')
-          .where('inventory_item.item_id = item.id')
-          .andWhere('inventory_item.status = "abnormal"');
+          .select('SUM(inventoryItem.quantity)', 'quantityNonAvailable')
+          .from(InventoryItem, 'inventoryItem')
+          .where('inventoryItem.item_id = item.id')
+          .andWhere('inventoryItem.status = "abnormal"');
       }, 'quantityNonAvailable')
       .addSelect((subQuery) => {
         return subQuery
           .select(
-            "JSON_ARRAYAGG(JSON_OBJECT('zone_id', t.zone_id, 'zone_name', t.zone_name, 'quantity', t.quantity))",
-            'quantity_by_zone',
+            "JSON_ARRAYAGG(JSON_OBJECT('zoneId', t.zoneId, 'zoneName', t.zoneName, 'quantity', t.quantity))",
+            'quantityByZone',
           )
           .from((qb) => {
             return qb
-              .select('location.zone_id', 'zone_id')
-              .addSelect('zone.name', 'zone_name')
-              .addSelect('SUM(inventory_item.quantity)', 'quantity')
-              .from(InventoryItem, 'inventory_item')
-              .leftJoin('inventory_item.location', 'location')
+              .select('location.zoneId', 'zoneId')
+              .addSelect('zone.name', 'zoneName')
+              .addSelect('SUM(inventoryItem.quantity)', 'quantity')
+              .from(InventoryItem, 'inventoryItem')
+              .leftJoin('inventoryItem.location', 'location')
               .leftJoin('location.zone', 'zone')
-              .where('inventory_item.item_id = item.id')
-              .andWhere('inventory_item.status <> "disposed"')
-              .groupBy('location.zone_id')
-              .orderBy({ 'location.zone_id': 'ASC' });
+              .where('inventoryItem.item_id = item.id')
+              .andWhere('inventoryItem.status <> "disposed"')
+              .groupBy('location.zoneId')
+              .orderBy({ 'location.zoneId': 'ASC' });
           }, 't');
       }, 'quantityByZone')
       .addSelect((subQuery) => {
         return subQuery
           .select(
-            "JSON_ARRAYAGG(JSON_OBJECT('zone_id', t.zone_id, 'zone_name', t.zone_name, 'status', t.status, 'quantity', t.quantity))",
+            "JSON_ARRAYAGG(JSON_OBJECT('zoneId', t.zoneId, 'zoneName', t.zoneName, 'status', t.status, 'quantity', t.quantity))",
             'quantity_by_status_in_zone',
           )
           .from((qb) => {
             return qb
-              .select('location.zone_id', 'zone_id')
-              .addSelect('zone.name', 'zone_name')
-              .addSelect('SUM(inventory_item.quantity)', 'quantity')
-              .addSelect('inventory_item.status', 'status')
-              .from(InventoryItem, 'inventory_item')
-              .leftJoin('inventory_item.location', 'location')
+              .select('location.zoneId', 'zoneId')
+              .addSelect('zone.name', 'zoneName')
+              .addSelect('SUM(inventoryItem.quantity)', 'quantity')
+              .addSelect('inventoryItem.status', 'status')
+              .from(InventoryItem, 'inventoryItem')
+              .leftJoin('inventoryItem.location', 'location')
               .leftJoin('location.zone', 'zone')
-              .where('inventory_item.item_id = item.id')
+              .where('inventoryItem.item_id = item.id')
               .andWhere('location.deletedAt IS NULL')
-              .groupBy('location.zone_id, inventory_item.status')
-              .orderBy({ 'location.zone_id': 'ASC' });
+              .groupBy('location.zoneId, inventoryItem.status')
+              .orderBy({ 'location.zoneId': 'ASC' });
           }, 't');
       }, 'quantityByStatusInZone');
 
     queryBuilder
       .leftJoin('item.shipper', 'shipper')
-      .leftJoin('item.itemCodes', 'item_code')
+      .leftJoin('item.itemCodes', 'itemCode')
       .leftJoin('item.itemSerials', 'item_serial')
       .leftJoin('item.lots', 'lot')
       .leftJoin('lot.supplier', 'supplier')
-      .leftJoin('item.inventoryItems', 'inventory_item')
-      .leftJoin('inventory_item.location', 'location')
+      .leftJoin('item.inventoryItems', 'inventoryItem')
+      .leftJoin('inventoryItem.location', 'location')
       .leftJoin('location.zone', 'zone')
       .leftJoin('zone.warehouse', 'warehouse');
 
@@ -162,12 +162,12 @@ export class ItemService {
         property: `%${property}%`,
       });
     itemCode &&
-      queryBuilder.andWhere('item_code.code like :code', {
+      queryBuilder.andWhere('itemCode.code like :code', {
         code: `%${itemCode}%`,
       });
 
     queryBuilder.groupBy(
-      'item.id, item_code.id, lot.id, supplier.id, item_serial.id',
+      'item.id, itemCode.id, lot.id, supplier.id, item_serial.id',
     );
 
     const config: PaginateConfig<Item> = {

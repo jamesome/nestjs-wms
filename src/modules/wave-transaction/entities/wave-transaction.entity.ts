@@ -1,4 +1,3 @@
-import { Expose } from 'class-transformer';
 import {
   Entity,
   JoinColumn,
@@ -15,7 +14,6 @@ export class WaveTransaction {
   @JoinColumn({ name: 'wave_id' })
   wave!: Relation<Wave>;
 
-  @Expose({ name: 'wave_id' })
   @PrimaryColumn({ name: 'wave_id' })
   waveId!: number;
 
@@ -23,7 +21,6 @@ export class WaveTransaction {
   @JoinColumn({ name: 'transaction_id' })
   transaction!: Relation<Transaction>;
 
-  @Expose({ name: 'transaction_id' })
   @PrimaryColumn({ name: 'transaction_id' })
   transactionId!: number;
 }

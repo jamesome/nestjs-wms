@@ -1,6 +1,7 @@
 services:
   app:
     container_name: sellmate_wms_app
+    restart: no
     build:
       target: development
     ports:
@@ -11,7 +12,7 @@ services:
   db-tenant:
     image: mysql:8.0.38
     container_name: sellmate_wms_db_tenant
-    restart: unless-stopped
+    restart: no
     env_file:
       - .env
     ports:

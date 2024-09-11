@@ -13,11 +13,14 @@ import { TransactionService } from 'src/modules/transaction/transaction.service'
 import { UpdateWaveDto } from './dto/update-wave.dto';
 import { FindWaveDto } from './dto/find-wave.dto';
 import { FindTransactionDto } from 'src/modules/transaction/dto/find-transaction.dto';
-import { ApiCreatedResponse, ApiOperation } from '@nestjs/swagger';
-import { MakeWaveDto } from './dto/make-wave.dto';
+import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateWaveDto } from './dto/create-wave.dto';
 import { Category, SlipStatus } from '../enum';
+import { CustomHttpException } from 'src/common/exceptions/custom-http.exception';
+import { HttpStatus } from 'src/common/constants';
 
 @Controller('waves')
+@ApiTags('Wave API')
 export class WaveController {
   constructor(
     private readonly waveService: WaveService,
@@ -29,22 +32,27 @@ export class WaveController {
   @ApiCreatedResponse({ description: 'Created' })
   async create(
     @Body('filters') findTransactionDto: FindTransactionDto,
-    @Body('filters') makeWaveDto: MakeWaveDto,
+    @Body('filters') createWaveDto: CreateWaveDto,
   ) {
-    // 출고이면서, 작업예정 상태만 wave 생성가능.
-    if (!findTransactionDto.category) {
-      findTransactionDto.category = Category.SHIPPING;
-    }
-    if (!findTransactionDto.status || findTransactionDto.status.length === 0) {
-      findTransactionDto.status = [SlipStatus.SCHEDULED];
-    }
+    // 출고이면서, 할당완료 상태만 wave 생성가능.
+    findTransactionDto.category = Category.SHIPPING;
+    findTransactionDto.status = [SlipStatus.ALLOCATED];
 
     const transactions =
-      await this.transactionService.getManyShippingInstructionList(
-        findTransactionDto,
-      );
+      await this.transactionService.getManyShippingList(findTransactionDto);
 
-    return await this.waveService.create(makeWaveDto, transactions);
+    if (!transactions || transactions.length === 0) {
+      throw new CustomHttpException(
+        {
+          error: 'Not Found',
+          message: 'ENTITY_NOT_FOUND',
+          statusCode: HttpStatus.NOT_FOUND,
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return await this.waveService.create(createWaveDto, transactions);
   }
 
   @Get()

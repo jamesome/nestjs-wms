@@ -1,4 +1,3 @@
-import { Expose } from 'class-transformer';
 import { StockAllocationRule } from 'src/modules/stock-allocation-rule/entities/stock-allocation-rule.entity';
 import { TimestampedEntity } from 'src/modules/timestamped-entity';
 import { Zone } from 'src/modules/zone/entities/zone.entity';
@@ -8,15 +7,15 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   Relation,
+  Unique,
 } from 'typeorm';
 
 @Entity({ name: 'warehouse' })
+@Unique(['name', 'code'])
 export class Warehouse extends TimestampedEntity {
-  @Expose()
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Expose()
   @Column('varchar', {
     name: 'name',
     length: 100,
@@ -26,17 +25,15 @@ export class Warehouse extends TimestampedEntity {
   })
   name!: string;
 
-  @Expose()
   @Column('varchar', {
     name: 'code',
     length: 100,
     unique: true,
-    nullable: false,
+    nullable: true,
     comment: '창고코드',
   })
   code?: string | null;
 
-  @Expose({ name: 'post_code' })
   @Column('varchar', {
     name: 'post_code',
     length: 10,
@@ -45,7 +42,6 @@ export class Warehouse extends TimestampedEntity {
   })
   postCode?: string;
 
-  @Expose()
   @Column('varchar', {
     name: 'address',
     length: 500,
@@ -54,7 +50,6 @@ export class Warehouse extends TimestampedEntity {
   })
   address?: string;
 
-  @Expose({ name: 'detail_address' })
   @Column('varchar', {
     name: 'detail_address',
     length: 500,
@@ -63,7 +58,6 @@ export class Warehouse extends TimestampedEntity {
   })
   detailAddress?: string;
 
-  @Expose()
   @Column('varchar', {
     name: 'manager',
     length: 100,
@@ -72,7 +66,6 @@ export class Warehouse extends TimestampedEntity {
   })
   manager?: string;
 
-  @Expose()
   @Column('varchar', {
     name: 'contact',
     length: 20,
@@ -82,7 +75,6 @@ export class Warehouse extends TimestampedEntity {
   contact?: string;
 
   // TODO: 추후, User로 대체
-  @Expose({ name: 'create_worker' })
   @Column('varchar', {
     name: 'create_worker',
     length: 50,
@@ -90,7 +82,6 @@ export class Warehouse extends TimestampedEntity {
   })
   createWorker?: string;
 
-  @Expose({ name: 'is_default' })
   @Column('tinyint', {
     name: 'is_default',
     nullable: true,
@@ -98,13 +89,11 @@ export class Warehouse extends TimestampedEntity {
   })
   isDefault!: number;
 
-  @Expose()
   @OneToMany(() => Zone, (zone) => zone.warehouse, {
     cascade: true,
   })
   zones?: Relation<Zone>[];
 
-  @Expose()
   @OneToMany(
     () => StockAllocationRule,
     (stockAllocationRule) => stockAllocationRule.warehouse,

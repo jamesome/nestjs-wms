@@ -1,4 +1,3 @@
-import { Expose } from 'class-transformer';
 import { Transaction } from 'src/modules/transaction/entities/transaction.entity';
 import { Shop } from 'src/modules/shop/entities/shop.entity';
 import {
@@ -16,12 +15,10 @@ export class TransactionB2cOrder {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Expose()
   @OneToOne(() => Transaction, (transaction) => transaction.transactionB2cOrder)
   @JoinColumn({ name: 'transaction_id' })
-  transaction?: Relation<Transaction>[];
+  transaction!: Relation<Transaction>;
 
-  @Expose({ name: 'transaction_id' })
   @Column({
     name: 'transaction_id',
     nullable: false,
@@ -29,7 +26,6 @@ export class TransactionB2cOrder {
   })
   transactionId!: number;
 
-  @Expose({ name: 'number' })
   @Column('varchar', {
     name: 'number',
     length: 200,
@@ -37,19 +33,16 @@ export class TransactionB2cOrder {
   })
   number?: string;
 
-  @Expose()
   @ManyToOne(() => Shop, (shop) => shop.transactionB2cOrders)
   @JoinColumn({ name: 'shop_id' })
-  shop?: Relation<Shop>[];
+  shop!: Relation<Shop>;
 
-  @Expose({ name: 'shop_id' })
   @Column({
     name: 'shop_id',
     comment: '(FK) 판매처 일련번호',
   })
-  shopId?: number;
+  shopId!: number;
 
-  @Expose({ name: 'recipient' })
   @Column('varchar', {
     name: 'recipient',
     length: 100,
@@ -57,7 +50,6 @@ export class TransactionB2cOrder {
   })
   recipient?: string;
 
-  @Expose({ name: 'contact' })
   @Column('varchar', {
     name: 'contact',
     length: 20,
@@ -65,7 +57,6 @@ export class TransactionB2cOrder {
   })
   contact?: string;
 
-  @Expose({ name: 'post_code' })
   @Column('varchar', {
     name: 'post_code',
     length: 6,
@@ -73,7 +64,6 @@ export class TransactionB2cOrder {
   })
   postCode?: string;
 
-  @Expose({ name: 'address' })
   @Column('varchar', {
     name: 'address',
     length: 500,
@@ -81,7 +71,6 @@ export class TransactionB2cOrder {
   })
   address?: string;
 
-  @Expose({ name: 'detail_address' })
   @Column('varchar', {
     name: 'detail_address',
     length: 500,
@@ -89,7 +78,6 @@ export class TransactionB2cOrder {
   })
   detailAddress?: string;
 
-  @Expose({ name: 'invoice_number' })
   @Column('varchar', {
     name: 'invoice_number',
     length: 30,
@@ -97,7 +85,6 @@ export class TransactionB2cOrder {
   })
   invoiceNumber?: string;
 
-  @Expose({ name: 'ordered_at' })
   @Column({
     type: 'date',
     name: 'ordered_at',

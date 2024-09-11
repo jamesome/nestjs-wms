@@ -34,26 +34,31 @@ lint-test:
   script:
     - yarn run lint
 
-build-staging:
+build-dev:
   stage: build
+  needs:
+    - unit-test
+    - lint-test
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - echo "[auth]" > .sentryclirc
     - echo "token=$SENTRY_AUTH_TOKEN" >> .sentryclirc
   script:
     - echo "Compiling the code..."
-    - docker build --pull --cache-from $CI_REGISTRY_IMAGE/app:staging -t "$CI_REGISTRY_IMAGE/app:staging" .
-    - docker push "$CI_REGISTRY_IMAGE/app:staging"
+    - docker build --pull --cache-from $CI_REGISTRY_IMAGE/app:dev -t "$CI_REGISTRY_IMAGE/app:dev" .
+    - docker push "$CI_REGISTRY_IMAGE/app:dev"
     - echo "Compile complete."
   only:
     refs:
-      - staging
+      - main
   tags:
     - docker
 
-deploy-staging:
+deploy-dev:
   stage: deploy
-  environment: staging
+  needs:
+    - build-dev
+  environment: development
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
@@ -67,11 +72,11 @@ deploy-staging:
     - ssh deployer@10.0.64.100 "cd ~/Sellmate/wms && 
       git pull origin &&
       docker login -u '$CI_REGISTRY_USER' -p '$CI_REGISTRY_PASSWORD' $CI_REGISTRY && 
-      docker compose -f docker-compose.yml -f docker-compose.staging.yml pull &&
-      docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d"
+      docker compose -f docker-compose.yml -f docker-compose.dev.yml pull &&
+      docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d"
     - echo "Application successfully deployed."
   only:
     refs:
-      - staging
+      - main
   tags:
     - shell

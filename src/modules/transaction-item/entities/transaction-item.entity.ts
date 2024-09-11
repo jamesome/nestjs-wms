@@ -4,6 +4,7 @@ import { Item } from 'src/modules/item/entities/item.entity';
 import { Location } from 'src/modules/location/entities/location.entity';
 import { Lot } from 'src/modules/lot/entities/lot.entity';
 import { OperationType } from 'src/modules/operation-type/entities/operation-type.entity';
+import { StockAllocated } from 'src/modules/stock-allocated/entities/stock-allocated.entity';
 import { Supplier } from 'src/modules/supplier/entities/supplier.entity';
 import { Transaction } from 'src/modules/transaction/entities/transaction.entity';
 import {
@@ -11,6 +12,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
@@ -24,7 +26,6 @@ export class TransactionItem {
   @JoinColumn({ name: 'transaction_id' })
   transaction!: Relation<Transaction>;
 
-  @Expose({ name: 'transaction_id' })
   @Column({
     name: 'transaction_id',
     nullable: false,
@@ -36,7 +37,6 @@ export class TransactionItem {
   @JoinColumn({ name: 'item_id' })
   item!: Relation<Item>;
 
-  @Expose({ name: 'item_id' })
   @Column({
     name: 'item_id',
     nullable: false,
@@ -44,7 +44,6 @@ export class TransactionItem {
   })
   itemId!: number;
 
-  @Expose({ name: 'location_departure' })
   @ManyToOne(
     () => Location,
     (location) => location.transactions_locationDeparture,
@@ -52,7 +51,6 @@ export class TransactionItem {
   @JoinColumn({ name: 'location_departure_id' })
   locationDeparture!: Relation<Location>;
 
-  @Expose({ name: 'location_departure_id' })
   @Column('int', {
     name: 'location_departure_id',
     nullable: true,
@@ -60,7 +58,6 @@ export class TransactionItem {
   })
   locationDepartureId?: number | null;
 
-  @Expose({ name: 'location_arrival' })
   @ManyToOne(
     () => Location,
     (location) => location.transactions_locationArrival,
@@ -68,7 +65,6 @@ export class TransactionItem {
   @JoinColumn({ name: 'location_arrival_id' })
   locationArrival!: Relation<Location>;
 
-  @Expose({ name: 'location_arrival_id' })
   @Column('int', {
     name: 'location_arrival_id',
     nullable: true,
@@ -80,7 +76,6 @@ export class TransactionItem {
   @JoinColumn({ name: 'lot_id' })
   lot!: Relation<Lot>;
 
-  @Expose({ name: 'lot_id' })
   @Column('int', {
     name: 'lot_id',
     nullable: true,
@@ -92,7 +87,6 @@ export class TransactionItem {
   @JoinColumn({ name: 'supplier_id' })
   supplier!: Relation<Supplier>;
 
-  @Expose({ name: 'supplier_id' })
   @Column({
     name: 'supplier_id',
     nullable: true,
@@ -100,12 +94,10 @@ export class TransactionItem {
   })
   supplierId?: number | null;
 
-  @Expose({ name: 'operation_type' })
   @ManyToOne(() => OperationType, (operationType) => operationType.transactions)
   @JoinColumn({ name: 'operation_type_id' })
   operationType!: Relation<OperationType>;
 
-  @Expose({ name: 'operation_type_id' })
   @Column('int', {
     name: 'operation_type_id',
     nullable: true,
@@ -113,7 +105,6 @@ export class TransactionItem {
   })
   operationTypeId?: number | null;
 
-  @Expose()
   @Column('int', {
     name: 'quantity',
     nullable: false,
@@ -122,7 +113,6 @@ export class TransactionItem {
   quantity!: number;
 
   // javascript의 number 타입으로 bigint 표현 시 문자열로 변환되는 경우
-  @Expose()
   @Column({
     type: 'bigint',
     transformer: {
@@ -135,7 +125,6 @@ export class TransactionItem {
   })
   price?: number | null;
 
-  @Expose()
   @Column({
     type: 'enum',
     enum: StockStatus,
@@ -146,11 +135,17 @@ export class TransactionItem {
   })
   status!: StockStatus;
 
-  @Expose()
   @Column('text', {
     name: 'remark',
     nullable: true,
     comment: '비고',
   })
-  remark?: string | null;
+  remark?: string;
+
+  @Expose({ name: 'stockAllocations' })
+  @OneToMany(
+    () => StockAllocated,
+    (stockAllocated) => stockAllocated.transactionItem,
+  )
+  stockAllocations!: Relation<StockAllocated>[];
 }

@@ -1,0 +1,777 @@
+{
+  "data": [
+    {
+      "updated_at": "2024-09-05T06:54:45.000Z",
+      "completed_at": null,
+      "id": 30,
+      "transaction_group_id": 36,
+      "slip_number": "20240905-000001-1",
+      "category": "shipping",
+      "input_type": "Web > 출고",
+      "status": "scheduled",
+      "create_worker": "create_worker_name",
+      "created_at": "2024-09-05T05:44:05.000Z",
+      "transaction_group": {
+        "created_at": "2024-09-05T05:44:05.000Z",
+        "id": 36,
+        "transaction_number": "20240905-000001"
+      },
+      "transaction_items": [
+        {
+          "id": 16,
+          "transaction_id": 30,
+          "item_id": 2,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 2,
+          "price": 10000,
+          "status": "normal",
+          "remark": "하아아아암ㄴㅇ",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 2,
+            "name": "Oliver Hickle",
+            "property": "Handcrafted",
+            "shipper_id": 6,
+            "item_codes": [
+              {
+                "id": 15,
+                "item_id": 2,
+                "code": "ZBGTH"
+              },
+              {
+                "id": 12,
+                "item_id": 2,
+                "code": "HJDHC"
+              },
+              {
+                "id": 8,
+                "item_id": 2,
+                "code": "UOYZS"
+              },
+              {
+                "id": 7,
+                "item_id": 2,
+                "code": "BZRKS"
+              },
+              {
+                "id": 1,
+                "item_id": 2,
+                "code": "IJVSQ"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        }
+      ],
+      "transaction_b2c_order": {
+        "id": 8,
+        "transaction_id": 30,
+        "number": "apple-000001",
+        "shop_id": 3,
+        "recipient": "스누피",
+        "contact": "01098986565",
+        "post_code": "07620",
+        "address": "가나다라 마바사 아아아아",
+        "detail_address": "190-190",
+        "invoice_number": null,
+        "ordered_at": "2024-09-05",
+        "shop": {
+          "id": 3,
+          "name": "11번가"
+        }
+      },
+      "transaction_zones": []
+    },
+    {
+      "updated_at": "2024-09-03T08:12:36.000Z",
+      "completed_at": null,
+      "id": 4,
+      "transaction_group_id": 1,
+      "slip_number": "20240725-000028-12",
+      "category": "shipping",
+      "input_type": "Web > 출고",
+      "status": "scheduled",
+      "create_worker": "create_worker_name",
+      "created_at": "2024-08-29T23:28:51.000Z",
+      "transaction_group": {
+        "created_at": "2024-08-29T23:28:51.000Z",
+        "id": 1,
+        "transaction_number": "20240725-000028"
+      },
+      "transaction_items": [
+        {
+          "id": 8,
+          "transaction_id": 4,
+          "item_id": 8,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 2,
+          "price": 450000,
+          "status": "normal",
+          "remark": "",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 8,
+            "name": "Mr. Jermaine Kling",
+            "property": "Intelligent",
+            "shipper_id": 10,
+            "item_codes": [
+              {
+                "id": 106,
+                "item_id": 8,
+                "code": "SLDIJ"
+              },
+              {
+                "id": 104,
+                "item_id": 8,
+                "code": "VXJJV"
+              },
+              {
+                "id": 101,
+                "item_id": 8,
+                "code": "ISJJR"
+              },
+              {
+                "id": 99,
+                "item_id": 8,
+                "code": "YTLRE"
+              },
+              {
+                "id": 109,
+                "item_id": 8,
+                "code": "PEKPB"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        },
+        {
+          "id": 10,
+          "transaction_id": 4,
+          "item_id": 10,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 2,
+          "price": 2272727,
+          "status": "normal",
+          "remark": "",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 10,
+            "name": "Marlon Lueilwitz",
+            "property": "Licensed",
+            "shipper_id": 6,
+            "item_codes": [
+              {
+                "id": 2,
+                "item_id": 10,
+                "code": "ZGIBE"
+              },
+              {
+                "id": 4,
+                "item_id": 10,
+                "code": "YNKMH"
+              },
+              {
+                "id": 11,
+                "item_id": 10,
+                "code": "BLOJF"
+              },
+              {
+                "id": 20,
+                "item_id": 10,
+                "code": "ODWNS"
+              },
+              {
+                "id": 25,
+                "item_id": 10,
+                "code": "QIJYR"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        }
+      ],
+      "transaction_b2c_order": {
+        "id": 4,
+        "transaction_id": 4,
+        "number": "S240719084725",
+        "shop_id": 2,
+        "recipient": "고윤정",
+        "contact": "01066665555",
+        "post_code": "63166",
+        "address": "제주특별자치도 제주시 관덕로7길 12-6 (일도일동, 제주도교육관)",
+        "detail_address": "4",
+        "invoice_number": null,
+        "ordered_at": "2024-07-19",
+        "shop": {
+          "id": 2,
+          "name": "고도몰"
+        }
+      },
+      "transaction_zones": []
+    },
+    {
+      "updated_at": "2024-09-03T07:53:44.000Z",
+      "completed_at": null,
+      "id": 3,
+      "transaction_group_id": 1,
+      "slip_number": "20240725-000028-9",
+      "category": "shipping",
+      "input_type": "Web > 출고",
+      "status": "scheduled",
+      "create_worker": "create_worker_name",
+      "created_at": "2024-08-29T23:28:51.000Z",
+      "transaction_group": {
+        "created_at": "2024-08-29T23:28:51.000Z",
+        "id": 1,
+        "transaction_number": "20240725-000028"
+      },
+      "transaction_items": [
+        {
+          "id": 6,
+          "transaction_id": 3,
+          "item_id": 6,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 20,
+          "price": 500000,
+          "status": "normal",
+          "remark": "",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 6,
+            "name": "Wilson Ortiz",
+            "property": "Oriental",
+            "shipper_id": 6,
+            "item_codes": [
+              {
+                "id": 90,
+                "item_id": 6,
+                "code": "YXDZV"
+              },
+              {
+                "id": 94,
+                "item_id": 6,
+                "code": "FYJOD"
+              },
+              {
+                "id": 77,
+                "item_id": 6,
+                "code": "QHLGP"
+              },
+              {
+                "id": 60,
+                "item_id": 6,
+                "code": "GRMGC"
+              },
+              {
+                "id": 65,
+                "item_id": 6,
+                "code": "KRGWE"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        },
+        {
+          "id": 7,
+          "transaction_id": 3,
+          "item_id": 7,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 5,
+          "price": 10000,
+          "status": "normal",
+          "remark": "",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 7,
+            "name": "Phil Muller",
+            "property": "Electronic",
+            "shipper_id": 8,
+            "item_codes": [
+              {
+                "id": 91,
+                "item_id": 7,
+                "code": "RUKFZ"
+              },
+              {
+                "id": 86,
+                "item_id": 7,
+                "code": "OFVWX"
+              },
+              {
+                "id": 80,
+                "item_id": 7,
+                "code": "RKFRS"
+              },
+              {
+                "id": 72,
+                "item_id": 7,
+                "code": "XGFUT"
+              },
+              {
+                "id": 69,
+                "item_id": 7,
+                "code": "LPJSI"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        }
+      ],
+      "transaction_b2c_order": {
+        "id": 3,
+        "transaction_id": 3,
+        "number": "S240719084247",
+        "shop_id": 1,
+        "recipient": "켄트백",
+        "contact": "01033334444",
+        "post_code": "05397",
+        "address": "서울특별시 강동구 성내로 45 (성내동, 강동구보건소)",
+        "detail_address": "3",
+        "invoice_number": null,
+        "ordered_at": "2024-07-19",
+        "shop": {
+          "id": 1,
+          "name": "쿠팡"
+        }
+      },
+      "transaction_zones": []
+    },
+    {
+      "updated_at": "2024-09-05T06:54:45.000Z",
+      "completed_at": null,
+      "id": 5,
+      "transaction_group_id": 1,
+      "slip_number": "20240816-000001-1",
+      "category": "shipping",
+      "input_type": "Web > 출고",
+      "status": "scheduled",
+      "create_worker": "create_worker_name",
+      "created_at": "2024-08-29T23:28:51.000Z",
+      "transaction_group": {
+        "created_at": "2024-08-29T23:28:51.000Z",
+        "id": 1,
+        "transaction_number": "20240725-000028"
+      },
+      "transaction_items": [
+        {
+          "id": 11,
+          "transaction_id": 5,
+          "item_id": 4,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 1,
+          "price": 10000,
+          "status": "normal",
+          "remark": "",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 4,
+            "name": "Nettie Kunze",
+            "property": "Recycled",
+            "shipper_id": 9,
+            "item_codes": [
+              {
+                "id": 30,
+                "item_id": 4,
+                "code": "HLSQC"
+              },
+              {
+                "id": 34,
+                "item_id": 4,
+                "code": "NPPIN"
+              },
+              {
+                "id": 39,
+                "item_id": 4,
+                "code": "HCLPG"
+              },
+              {
+                "id": 42,
+                "item_id": 4,
+                "code": "WBFQG"
+              },
+              {
+                "id": 45,
+                "item_id": 4,
+                "code": "VNNEY"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        }
+      ],
+      "transaction_b2c_order": {
+        "id": 5,
+        "transaction_id": 5,
+        "number": "S202020202020",
+        "shop_id": 3,
+        "recipient": "박지헌",
+        "contact": "01079794646",
+        "post_code": "07620",
+        "address": "서울특별시 종로구 김두한",
+        "detail_address": "22-1",
+        "invoice_number": null,
+        "ordered_at": "2024-08-16",
+        "shop": {
+          "id": 3,
+          "name": "11번가"
+        }
+      },
+      "transaction_zones": []
+    },
+    {
+      "updated_at": "2024-09-05T01:52:30.000Z",
+      "completed_at": null,
+      "id": 1,
+      "transaction_group_id": 1,
+      "slip_number": "20240725-000028-3",
+      "category": "shipping",
+      "input_type": "Web > 출고",
+      "status": "scheduled",
+      "create_worker": "create_worker_name",
+      "created_at": "2024-08-29T23:28:51.000Z",
+      "transaction_group": {
+        "created_at": "2024-08-29T23:28:51.000Z",
+        "id": 1,
+        "transaction_number": "20240725-000028"
+      },
+      "transaction_items": [
+        {
+          "id": 3,
+          "transaction_id": 1,
+          "item_id": 3,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 5,
+          "price": 50000,
+          "status": "normal",
+          "remark": "",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 3,
+            "name": "Guillermo Maggio",
+            "property": "Oriental",
+            "shipper_id": 8,
+            "item_codes": [
+              {
+                "id": 85,
+                "item_id": 3,
+                "code": "IUBDY"
+              },
+              {
+                "id": 63,
+                "item_id": 3,
+                "code": "JOYIE"
+              },
+              {
+                "id": 67,
+                "item_id": 3,
+                "code": "EIHKQ"
+              },
+              {
+                "id": 73,
+                "item_id": 3,
+                "code": "OLNEU"
+              },
+              {
+                "id": 79,
+                "item_id": 3,
+                "code": "WUXSW"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        },
+        {
+          "id": 1,
+          "transaction_id": 1,
+          "item_id": 1,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 120,
+          "price": 10000,
+          "status": "normal",
+          "remark": "",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 1,
+            "name": "Jane Shanahan",
+            "property": "Practical",
+            "shipper_id": 7,
+            "item_codes": [
+              {
+                "id": 5,
+                "item_id": 1,
+                "code": "IPBNB"
+              },
+              {
+                "id": 9,
+                "item_id": 1,
+                "code": "HJEJN"
+              },
+              {
+                "id": 13,
+                "item_id": 1,
+                "code": "NUSOI"
+              },
+              {
+                "id": 16,
+                "item_id": 1,
+                "code": "BIICR"
+              },
+              {
+                "id": 3,
+                "item_id": 1,
+                "code": "JMXND"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        },
+        {
+          "id": 2,
+          "transaction_id": 1,
+          "item_id": 2,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 1,
+          "price": 4545454,
+          "status": "normal",
+          "remark": "",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 2,
+            "name": "Oliver Hickle",
+            "property": "Handcrafted",
+            "shipper_id": 6,
+            "item_codes": [
+              {
+                "id": 1,
+                "item_id": 2,
+                "code": "IJVSQ"
+              },
+              {
+                "id": 7,
+                "item_id": 2,
+                "code": "BZRKS"
+              },
+              {
+                "id": 8,
+                "item_id": 2,
+                "code": "UOYZS"
+              },
+              {
+                "id": 12,
+                "item_id": 2,
+                "code": "HJDHC"
+              },
+              {
+                "id": 15,
+                "item_id": 2,
+                "code": "ZBGTH"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        }
+      ],
+      "transaction_b2c_order": {
+        "id": 1,
+        "transaction_id": 1,
+        "number": "S240719084039",
+        "shop_id": 1,
+        "recipient": "카리나",
+        "contact": "01011112222",
+        "post_code": "04209",
+        "address": "서울특별시 마포구 만리재로 47 (신공덕동, 공덕코어)",
+        "detail_address": "1",
+        "invoice_number": "123123aaa",
+        "ordered_at": "2024-07-19",
+        "shop": {
+          "id": 1,
+          "name": "쿠팡"
+        }
+      },
+      "transaction_zones": []
+    },
+    {
+      "updated_at": "2024-09-05T01:52:30.000Z",
+      "completed_at": null,
+      "id": 2,
+      "transaction_group_id": 1,
+      "slip_number": "20240725-000028-6",
+      "category": "shipping",
+      "input_type": "Web > 출고",
+      "status": "scheduled",
+      "create_worker": "create_worker_name",
+      "created_at": "2024-08-29T23:28:51.000Z",
+      "transaction_group": {
+        "created_at": "2024-08-29T23:28:51.000Z",
+        "id": 1,
+        "transaction_number": "20240725-000028"
+      },
+      "transaction_items": [
+        {
+          "id": 4,
+          "transaction_id": 2,
+          "item_id": 4,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 2,
+          "price": 10000,
+          "status": "normal",
+          "remark": "",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 4,
+            "name": "Nettie Kunze",
+            "property": "Recycled",
+            "shipper_id": 9,
+            "item_codes": [
+              {
+                "id": 30,
+                "item_id": 4,
+                "code": "HLSQC"
+              },
+              {
+                "id": 34,
+                "item_id": 4,
+                "code": "NPPIN"
+              },
+              {
+                "id": 39,
+                "item_id": 4,
+                "code": "HCLPG"
+              },
+              {
+                "id": 42,
+                "item_id": 4,
+                "code": "WBFQG"
+              },
+              {
+                "id": 45,
+                "item_id": 4,
+                "code": "VNNEY"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        },
+        {
+          "id": 5,
+          "transaction_id": 2,
+          "item_id": 5,
+          "location_departure_id": null,
+          "location_arrival_id": null,
+          "lot_id": null,
+          "supplier_id": null,
+          "operation_type_id": null,
+          "quantity": 1,
+          "price": 250000000,
+          "status": "normal",
+          "remark": "",
+          "item": {
+            "created_at": "2024-09-04T07:10:08.000Z",
+            "id": 5,
+            "name": "Miss Jennifer Cummings",
+            "property": "Generic",
+            "shipper_id": 7,
+            "item_codes": [
+              {
+                "id": 18,
+                "item_id": 5,
+                "code": "KBYZY"
+              },
+              {
+                "id": 22,
+                "item_id": 5,
+                "code": "HHEXP"
+              },
+              {
+                "id": 26,
+                "item_id": 5,
+                "code": "SMJFF"
+              },
+              {
+                "id": 31,
+                "item_id": 5,
+                "code": "TUFHT"
+              },
+              {
+                "id": 35,
+                "item_id": 5,
+                "code": "SLHXG"
+              }
+            ],
+            "item_serials": []
+          },
+          "allocated_stocks": []
+        }
+      ],
+      "transaction_b2c_order": {
+        "id": 2,
+        "transaction_id": 2,
+        "number": "S240719084155",
+        "shop_id": 1,
+        "recipient": "장원영",
+        "contact": "01022223333",
+        "post_code": "07620",
+        "address": "서울특별시 강서구 방화동로3길 23 (방화동)",
+        "detail_address": "2",
+        "invoice_number": null,
+        "ordered_at": "2024-07-19",
+        "shop": {
+          "id": 1,
+          "name": "쿠팡"
+        }
+      },
+      "transaction_zones": []
+    }
+  ],
+  "meta": {}
+}

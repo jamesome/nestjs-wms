@@ -1,0 +1,67 @@
+{
+  "data": [
+    {
+      "zoneId": 1,
+      "itemId": "1",
+      "locationId": 1,
+      "lotId": "1",
+      "availableQuantity": "1"
+    },
+    {
+      "zoneId": 2,
+      "itemId": "1",
+      "locationId": 4,
+      "lotId": "3",
+      "availableQuantity": "1"
+    },
+    {
+      "zoneId": 1,
+      "itemId": "1",
+      "locationId": 2,
+      "lotId": "3",
+      "availableQuantity": "2"
+    },
+    {
+      "zoneId": 2,
+      "itemId": "1",
+      "locationId": 5,
+      "lotId": "5",
+      "availableQuantity": "2"
+    },
+    {
+      "zoneId": 1,
+      "itemId": "1",
+      "locationId": 3,
+      "lotId": "4",
+      "availableQuantity": "4"
+    },
+    {
+      "zoneId": 3,
+      "itemId": "1",
+      "locationId": 7,
+      "lotId": "6",
+      "availableQuantity": "10"
+    },
+    {
+      "zoneId": 1,
+      "itemId": "2",
+      "locationId": 1,
+      "lotId": "2",
+      "availableQuantity": "2"
+    },
+    {
+      "zoneId": 2,
+      "itemId": "3",
+      "locationId": 4,
+      "lotId": null,
+      "availableQuantity": "5"
+    },
+    {
+      "zoneId": 1,
+      "itemId": "4",
+      "locationId": 1,
+      "lotId": null,
+      "availableQuantity": "2"
+    }
+  ]
+}

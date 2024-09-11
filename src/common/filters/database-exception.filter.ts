@@ -10,7 +10,7 @@ import { QueryFailedError } from 'typeorm';
 import { WINSTON_MODULE_PROVIDER, WinstonLogger } from 'nest-winston';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nTranslations } from 'src/generated/i18n.generated';
-import { SlackService } from 'src/services/slack/slack.service';
+import * as Sentry from '@sentry/nestjs';
 
 @Catch(QueryFailedError)
 export class DatabaseExceptionFilter<T extends QueryFailedError>
@@ -18,10 +18,10 @@ export class DatabaseExceptionFilter<T extends QueryFailedError>
 {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
-    private readonly slackService: SlackService,
   ) {}
 
   async catch(exception: T, host: ArgumentsHost) {
+    Sentry.captureException(exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const i18n = I18nContext.current<I18nTranslations>(host);
@@ -31,12 +31,6 @@ export class DatabaseExceptionFilter<T extends QueryFailedError>
       message: JSON.stringify({
         ...exception,
       }),
-    });
-
-    await this.slackService.sendNotification(exception, {
-      ip: response.req.ip,
-      path: `[${response.req.method}] ${response.req.originalUrl}`,
-      body: response.req.body,
     });
 
     // MySQL의 중복 키 오류 코드: ER_DUP_ENTRY

@@ -1,21 +1,10 @@
-import { Expose } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
-import { i18nValidationMessage } from 'nestjs-i18n';
+import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
 
 export class CreateWaveTransactionDto {
-  @Expose({ name: 'wave_id' })
-  @IsNotEmpty({
-    message: i18nValidationMessage('validation.rules.IS_NOT_EMPTY', {
-      message: 'wave_transaction.wave_id',
-    }),
-  })
+  @I18nValidate(IsNotEmpty)
   waveId!: number;
 
-  @Expose({ name: 'transaction_id' })
-  @IsNotEmpty({
-    message: i18nValidationMessage('validation.rules.IS_NOT_EMPTY', {
-      message: 'wave_transaction.transaction_id',
-    }),
-  })
+  @I18nValidate(IsNotEmpty)
   transactionId!: number;
 }

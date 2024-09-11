@@ -15,7 +15,6 @@ export class LotService {
 
   async create(createLotDto: CreateLotDto) {
     const lot = this.lotRepository.create(createLotDto);
-
     return await this.lotRepository.save(lot);
   }
 
@@ -29,11 +28,5 @@ export class LotService {
     };
 
     return await this.lotRepository.find(filters);
-  }
-
-  async findOne(id: number) {
-    return await this.lotRepository.findOne({
-      where: { id },
-    });
   }
 }

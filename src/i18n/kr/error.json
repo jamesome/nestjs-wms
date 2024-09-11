@@ -6,6 +6,7 @@
   "CANNOT_DELETE_DUE_TO_DEFAULT_VALUE": "기본값으로 지정된 데이터는 삭제가 불가능합니다.",
   "CANNOT_DELETE_DUE_TO_ASSOCIATED_ITEMS": "재고가 존재합니다. 재고를 보유한 보관장소는 삭제할 수 없습니다.",
   "CANNOT_DELETE_WAVE": "웨이브를 삭제할 수 없습니다. 웨이브상태가 [신규] 인지 확인 후 재시도 해주세요.",
+  "STOCK_SHORTAGE": "재고 부족",
   "fields": {
     "item_id": "품목",
     "item_code": "품목코드",
@@ -13,8 +14,8 @@
     "location_departure_name": "출발로케이션",
     "location_arrival_name": "도착로케이션",
     "supplier_name": "공급처",
-    "lot_number": "로트넘버",
-    "operation_type_name": "재고작업구분",
+    "lot_number": "로트 번호",
+    "operation_type_name": "재고 작업 구분",
     "quantity": "수량"
   },
   "rules": {

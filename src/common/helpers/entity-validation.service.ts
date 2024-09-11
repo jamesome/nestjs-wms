@@ -1,5 +1,5 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
-import { CustomHttpException } from '../exceptions/custom-http-exception';
+import { CustomHttpException } from '../exceptions/custom-http.exception';
 
 @Injectable()
 export class EntityValidationService {
@@ -8,7 +8,7 @@ export class EntityValidationService {
       throw new CustomHttpException(
         {
           error: 'ENTITY_NOT_FOUND',
-          message: 'NOT_FOUND',
+          message: 'ENTITY_NOT_FOUND',
           statusCode: HttpStatus.NOT_FOUND,
         },
         HttpStatus.NOT_FOUND,
@@ -20,8 +20,8 @@ export class EntityValidationService {
     if (entity.isDefault) {
       throw new CustomHttpException(
         {
-          error: 'CANNOT_DELETE_DUE_TO_DEFAULT_VALUE',
-          message: 'BAD_REQUEST',
+          error: 'BAD_REQUEST',
+          message: 'CANNOT_DELETE_DUE_TO_DEFAULT_VALUE',
           statusCode: HttpStatus.BAD_REQUEST,
         },
         HttpStatus.BAD_REQUEST,
@@ -32,8 +32,8 @@ export class EntityValidationService {
   validateAssociatedItems(): void {
     throw new CustomHttpException(
       {
-        error: 'CANNOT_DELETE_DUE_TO_ASSOCIATED_ITEMS',
-        message: 'BAD_REQUEST',
+        error: 'BAD_REQUEST',
+        message: 'CANNOT_DELETE_DUE_TO_ASSOCIATED_ITEMS',
         statusCode: HttpStatus.BAD_REQUEST,
       },
       HttpStatus.BAD_REQUEST,

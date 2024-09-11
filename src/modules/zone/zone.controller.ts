@@ -9,9 +9,6 @@ import {
   Query,
   HttpCode,
 } from '@nestjs/common';
-import { ZoneService } from './zone.service';
-import { CreateZoneDto } from './dto/create-zone.dto';
-import { UpdateZoneDto } from './dto/update-zone.dto';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
@@ -19,8 +16,13 @@ import {
   ApiTags,
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
-import { FindLocationDto } from '../location/dto/find-location.dto';
 import { HttpStatus } from 'src/common/constants';
+import { ZoneService } from './zone.service';
+import { CreateZoneDto } from './dto/create-zone.dto';
+import { UpdateZoneDto } from './dto/update-zone.dto';
+import { FindZoneDto } from './dto/find-zone.dto';
+import { EntityByIdPipe } from 'src/common/pipes/entity-by-id.pipe';
+import { Zone } from './entities/zone.entity';
 
 @Controller(['zones', 'warehouses/:warehouseId/zones'])
 @ApiTags('Zone API')
@@ -42,14 +44,14 @@ export class ZoneController {
   @ApiQuery({ name: 'name', type: 'string' })
   async findAll(
     @Param('warehouseId') warehouseId: number | null,
-    @Query() findLocationDto: FindLocationDto,
+    @Query() findZoneDto: FindZoneDto,
   ) {
-    return await this.zoneService.findAll(warehouseId, findLocationDto);
+    return await this.zoneService.findAll(warehouseId, findZoneDto);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number) {
-    return await this.zoneService.findOne(id);
+  async findOne(@Param('id', EntityByIdPipe(Zone)) zone: Zone) {
+    return zone;
   }
 
   @Put(':id')

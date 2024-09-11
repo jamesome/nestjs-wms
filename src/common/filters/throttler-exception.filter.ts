@@ -1,16 +1,16 @@
 import { ArgumentsHost, Catch, ExceptionFilter, Inject } from '@nestjs/common';
 import { ThrottlerException } from '@nestjs/throttler';
 import { WINSTON_MODULE_PROVIDER, WinstonLogger } from 'nest-winston';
-import { SlackService } from 'src/services/slack/slack.service';
+import * as Sentry from '@sentry/nestjs';
 
 @Catch(ThrottlerException)
 export class ThrottlerExceptionFilter implements ExceptionFilter {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
-    private readonly slackService: SlackService,
   ) {}
 
   async catch(exception: ThrottlerException, host: ArgumentsHost) {
+    Sentry.captureException(exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
     const status = exception.getStatus();
@@ -20,12 +20,6 @@ export class ThrottlerExceptionFilter implements ExceptionFilter {
       message: JSON.stringify({
         ...exception,
       }),
-    });
-
-    await this.slackService.sendNotification(exception, {
-      ip: response.req.ip,
-      path: `[${response.req.method}] ${response.req.originalUrl}`,
-      body: response.req.body,
     });
 
     response.status(status).json({

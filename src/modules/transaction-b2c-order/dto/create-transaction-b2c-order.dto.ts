@@ -1,88 +1,41 @@
 import { Optional } from '@nestjs/common';
-import { Expose } from 'class-transformer';
 import { IsInt, IsNotEmpty, MaxLength } from 'class-validator';
-import { i18nValidationMessage } from 'nestjs-i18n';
+import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
 
 export class CreateTransactionB2cOrderDto {
-  @Expose({ name: 'transaction_id' })
   transactionId!: number;
 
-  @Expose({ name: 'number' })
   @Optional()
-  @MaxLength(200, {
-    message: i18nValidationMessage('validation.rules.MAX_LENGTH', {
-      message: 'transaction_b2c_order.number',
-    }),
-  })
-  number?: string;
+  @I18nValidate(MaxLength, 200)
+  number!: string;
 
-  @Expose({ name: 'shop_id' })
-  @IsNotEmpty({
-    message: i18nValidationMessage('validation.rules.IS_NOT_EMPTY', {
-      message: 'transaction_b2c_order.shop_id',
-    }),
-  })
-  @IsInt({
-    message: i18nValidationMessage('validation.rules.IS_INT', {
-      message: 'transaction_b2c_order.shop_id',
-    }),
-  })
+  @I18nValidate(IsNotEmpty)
+  @I18nValidate(IsInt)
   shopId!: number;
 
-  @Expose({ name: 'recipient' })
-  @MaxLength(200, {
-    message: i18nValidationMessage('validation.rules.MAX_LENGTH', {
-      message: 'transaction_b2c_order.recipient',
-    }),
-  })
-  recipient?: string;
+  @I18nValidate(MaxLength, 200)
+  recipient!: string;
 
-  @Expose({ name: 'contact' })
   @Optional()
-  @MaxLength(20, {
-    message: i18nValidationMessage('validation.rules.MAX_LENGTH', {
-      message: 'transaction_b2c_order.contact',
-    }),
-  })
+  @I18nValidate(MaxLength, 20)
   contact?: string;
 
-  @Expose({ name: 'post_code' })
   @Optional()
-  @MaxLength(6, {
-    message: i18nValidationMessage('validation.rules.MAX_LENGTH', {
-      message: 'transaction_b2c_order.post_code',
-    }),
-  })
-  postCode?: string;
+  @I18nValidate(MaxLength, 6)
+  postCode!: string;
 
-  @Expose({ name: 'address' })
   @Optional()
-  @MaxLength(500, {
-    message: i18nValidationMessage('validation.rules.MAX_LENGTH', {
-      message: 'address.number',
-    }),
-  })
-  address?: string;
+  @I18nValidate(MaxLength, 500)
+  address!: string;
 
-  @Expose({ name: 'detail_address' })
   @Optional()
-  @MaxLength(500, {
-    message: i18nValidationMessage('validation.rules.MAX_LENGTH', {
-      message: 'transaction_b2c_order.detail_address',
-    }),
-  })
-  detailAddress?: string;
+  @I18nValidate(MaxLength, 500)
+  detailAddress!: string;
 
-  @Expose({ name: 'invoice_number' })
   @Optional()
-  @MaxLength(200, {
-    message: i18nValidationMessage('validation.rules.MAX_LENGTH', {
-      message: 'transaction_b2c_order.invoice_number',
-    }),
-  })
+  @I18nValidate(MaxLength, 200)
   invoiceNumber?: string;
 
-  @Expose({ name: 'ordered_at' })
   @Optional()
-  orderedAt?: Date;
+  orderedAt!: Date;
 }

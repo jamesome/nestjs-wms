@@ -10,6 +10,7 @@ import { DateTime } from 'luxon';
 import * as fs from 'fs';
 import { TransactionListener } from './listeners/transaction.listener';
 import { EventsModule } from 'src/events/events.module';
+import { InventoryItemService } from '../inventory-item/inventory-item.service';
 
 @Module({
   controllers: [TransactionController],
@@ -17,6 +18,7 @@ import { EventsModule } from 'src/events/events.module';
     TransactionService,
     LotService,
     ItemService,
+    InventoryItemService,
     FileService,
     TransactionListener,
   ],

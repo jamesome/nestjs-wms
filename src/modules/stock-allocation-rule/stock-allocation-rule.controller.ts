@@ -15,7 +15,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { UpdatePriorityDto } from './dto/update-priority.dto';
 
 @Controller('warehouses/:warehouseId/stock-allocation-rules')
-@ApiTags('StockAllocationRules API')
+@ApiTags('StockAllocationRule API')
 export class StockAllocationRuleController {
   constructor(
     private readonly stockAllocationRuleService: StockAllocationRuleService,

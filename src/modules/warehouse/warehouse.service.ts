@@ -28,43 +28,9 @@ export class WarehouseService {
   }
 
   async findAll(query: PaginateQuery, findWarehouseDto: FindWarehouseDto) {
-    // FIXME: Find Option으로 아래쿼리 구현이 안 됨
-    // WHERE ( `warehouse`.`id` = ? AND `warehouse`.`code` like ? AND (`warehouse`.`address` like ? or `warehouse`.`detail_address` like ?) )
-    // const { id, name, code, address } = findWarehouseDto;
-    // const findOptions: any = {
-    //   where: [
-    //     {
-    //       ...(id && { id }),
-    //       ...(name && { name: Like(`%${name}%`) }),
-    //       ...(code && { code: Like(`%${code}%`) }),
-    //       ...(address && [
-    //         { address: Like(`%${address}%`) },
-    //         { detailAddress: Like(`%${address}%`) },
-    //       ]),
-    //     },
-    //   ],
-    //   order: {
-    //     name: 'ASC',
-    //   },
-    // };
-
-    // // FIXME: DTO 활용하는 방향으로 개선.
-    // const warehouses = await this.warehouseRepository.find(findOptions);
-
-    // return warehouses.map((warehouse) => ({
-    //   id: warehouse.id,
-    //   name: warehouse.name,
-    //   code: warehouse.code,
-    //   post_code: warehouse.postCode,
-    //   address: warehouse.address,
-    //   detail_address: warehouse.detailAddress,
-    //   manager: warehouse.manager,
-    //   contact: warehouse.contact,
-    //   create_worker: warehouse.createWorker,
-    //   created_at: warehouse.createdAt,
-    // }));
-
     const { id, name, code, address, isDefault } = findWarehouseDto;
+    console.log(isDefault);
+    console.log(isDefault);
     const queryBuilder =
       this.warehouseRepository.createQueryBuilder('warehouse');
 
@@ -82,7 +48,7 @@ export class WarehouseService {
         },
       );
     isDefault &&
-      queryBuilder.andWhere('warehouse.is_default = :isDefault', {
+      queryBuilder.andWhere('warehouse.isDefault = :isDefault', {
         isDefault,
       });
 
@@ -92,12 +58,6 @@ export class WarehouseService {
     };
 
     return paginate(query, queryBuilder, config);
-  }
-
-  async findOne(id: number) {
-    return await this.warehouseRepository.findOne({
-      where: { id },
-    });
   }
 
   async update(id: number, updateWarehouseDto: UpdateWarehouseDto) {

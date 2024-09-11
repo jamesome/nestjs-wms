@@ -30,4 +30,34 @@ export class InventoryItemService {
 
     return inventoryItems;
   }
+
+  // 점유재고를 제외한 가용재고
+  async getAvailableStockList(warehouseId: number) {
+    return await this.inventoryItemRepository
+      .createQueryBuilder('inventoryItem')
+      .leftJoinAndSelect('inventoryItem.location', 'location')
+      .leftJoinAndSelect('location.zone', 'zone')
+      .leftJoinAndSelect(
+        'stock_allocated',
+        'sa',
+        'inventoryItem.item_id = sa.item_id AND inventoryItem.location_id = sa.location_id AND (inventoryItem.lot_id = sa.lot_id OR inventoryItem.lot_id IS NULL)',
+      )
+      .select([
+        'zone.id as zoneId',
+        'inventoryItem.item_id AS itemId',
+        'inventoryItem.location_id AS locationId',
+        'inventoryItem.lot_id AS lotId',
+        'inventoryItem.quantity - COALESCE(SUM(sa.quantity), 0) AS availableQuantity',
+      ])
+      .where('zone.warehouse_id = :warehouseId', { warehouseId })
+      .groupBy(
+        'inventoryItem.itemId, inventoryItem.locationId, inventoryItem.lotId, inventoryItem.quantity',
+      )
+      .having('availableQuantity > 0')
+      .orderBy({
+        'inventoryItem.itemId': 'ASC',
+        'inventoryItem.quantity': 'ASC',
+      })
+      .getRawMany();
+  }
 }

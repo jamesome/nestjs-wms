@@ -1,8 +1,10 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ShipperService } from './shipper.service';
 import { FindShipperDto } from './dto/find-shipper.dto';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('shippers')
+@ApiTags('Shipper API')
 export class ShipperController {
   constructor(private readonly shipperService: ShipperService) {}
 

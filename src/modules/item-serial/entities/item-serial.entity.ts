@@ -1,4 +1,3 @@
-import { Expose } from 'class-transformer';
 import { Item } from 'src/modules/item/entities/item.entity';
 import {
   Column,
@@ -21,10 +20,8 @@ export class ItemSerial {
   item!: Relation<Item>;
 
   @Column({ name: 'item_id' })
-  @Expose({ name: 'item_id' })
   itemId!: number;
 
-  @Expose({ name: 'serial_no' })
   @Column('varchar', {
     name: 'serial_no',
     length: 50,

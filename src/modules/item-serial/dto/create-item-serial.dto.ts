@@ -1,13 +1,7 @@
-import { Expose } from 'class-transformer';
 import { MaxLength } from 'class-validator';
-import { i18nValidationMessage } from 'nestjs-i18n';
+import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
 
 export class CreateItemSerialDto {
-  @MaxLength(50, {
-    message: i18nValidationMessage('validation.rules.MAX_LENGTH', {
-      message: 'item_serial.serial_no',
-    }),
-  })
-  @Expose({ name: 'serial_no' })
+  @I18nValidate(MaxLength, 50)
   serialNo!: string;
 }

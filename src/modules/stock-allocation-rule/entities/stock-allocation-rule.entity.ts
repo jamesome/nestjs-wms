@@ -1,10 +1,3 @@
-import { Expose } from 'class-transformer';
-import { StockAllocationMethod, ZoneFilter } from 'src/modules/enum';
-import { Shipper } from 'src/modules/shipper/entities/shipper.entity';
-import { StockAllocationRuleShop } from 'src/modules/stock-allocation-rule-shop/entities/stock-allocation-rule-shop.entity';
-import { StockAllocationRuleZone } from 'src/modules/stock-allocation-rule-zone/entities/stock-allocation-rule-zone.entity';
-import { TimestampedEntity } from 'src/modules/timestamped-entity';
-import { Warehouse } from 'src/modules/warehouse/entities/warehouse.entity';
 import {
   Column,
   Entity,
@@ -14,6 +7,12 @@ import {
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
+import { StockAllocationMethod, ZoneFilter } from 'src/modules/enum';
+import { Shipper } from 'src/modules/shipper/entities/shipper.entity';
+import { StockAllocationRuleShop } from 'src/modules/stock-allocation-rule-shop/entities/stock-allocation-rule-shop.entity';
+import { StockAllocationRuleZone } from 'src/modules/stock-allocation-rule-zone/entities/stock-allocation-rule-zone.entity';
+import { TimestampedEntity } from 'src/modules/timestamped-entity';
+import { Warehouse } from 'src/modules/warehouse/entities/warehouse.entity';
 
 @Entity({ name: 'stock_allocation_rule' })
 export class StockAllocationRule extends TimestampedEntity {
@@ -28,19 +27,18 @@ export class StockAllocationRule extends TimestampedEntity {
   warehouse!: Relation<Warehouse>;
 
   @Column({ name: 'warehouse_id' })
-  @Expose({ name: 'warehouse_id' })
   warehouseId!: number;
 
   @ManyToOne(() => Shipper, (shipper) => shipper.stockAllocationRules, {
     // eager: true,
     // cascade: true,
+    nullable: true,
   })
   @JoinColumn({ name: 'shipper_id' })
-  shipper!: Relation<Shipper>;
+  shipper!: Relation<Shipper> | null;
 
-  @Column({ name: 'shipper_id' })
-  @Expose({ name: 'shipper_id' })
-  shipperId!: number;
+  @Column({ name: 'shipper_id', nullable: true })
+  shipperId!: number | null;
 
   @Column({
     name: 'priority',
@@ -66,7 +64,6 @@ export class StockAllocationRule extends TimestampedEntity {
   })
   method!: StockAllocationMethod | string;
 
-  @Expose({ name: 'zone_filter' })
   @Column({
     type: 'enum',
     enum: ZoneFilter,
@@ -76,7 +73,6 @@ export class StockAllocationRule extends TimestampedEntity {
   })
   zoneFilter!: ZoneFilter | string;
 
-  @Expose({ name: 'is_default' })
   @Column('tinyint', {
     name: 'is_default',
     nullable: false,
@@ -84,14 +80,12 @@ export class StockAllocationRule extends TimestampedEntity {
   })
   isDefault!: number;
 
-  @Expose({ name: 'stock_allocation_rule_shops' })
   @OneToMany(
     () => StockAllocationRuleShop,
     (stockAllocationRuleShop) => stockAllocationRuleShop.stockAllocationRule,
   )
   stockAllocationRuleShops!: Relation<StockAllocationRuleShop>[];
 
-  @Expose({ name: 'stock_allocation_rule_zones' })
   @OneToMany(
     () => StockAllocationRuleZone,
     (stockAllocationRuleZone) => stockAllocationRuleZone.stockAllocationRule,

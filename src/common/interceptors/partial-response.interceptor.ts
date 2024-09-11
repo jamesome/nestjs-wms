@@ -10,26 +10,46 @@ import { HttpStatus } from '../constants';
 @Injectable()
 export class PartialResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    // const request = context.switchToHttp().getRequest();
-
     return next.handle().pipe(
       map((responseData) => {
         const response = context.switchToHttp().getResponse();
-        const responseLength = responseData?.length ?? 0;
+        const requestLength = responseData.requested;
+        const responseLength = responseData.result.length ?? 0;
 
-        // TODO: 엑셀작업 시 개수 판단..
-        // if (responseLength === request.body.data.length) {
-        //   response.status(HttpStatus.BAD_REQUEST);
+        const getResponseObject = (
+          status: number,
+          succeedCount: number,
+          failedCount: number,
+          errors: [],
+        ) => {
+          response.status(status);
+          return {
+            counts: {
+              total: requestLength,
+              succeed: succeedCount,
+              failed: failedCount,
+            },
+            errors,
+          };
+        };
 
-        //   return { errors: responseData };
-        // } else
-        if (responseLength > 0) {
-          response.status(HttpStatus.MULTI_STATUS);
-
-          return { errors: responseData };
+        if (responseLength === requestLength) {
+          return getResponseObject(
+            HttpStatus.BAD_REQUEST,
+            0,
+            requestLength,
+            responseData.result,
+          );
+        } else if (responseLength > 0) {
+          return getResponseObject(
+            HttpStatus.MULTI_STATUS,
+            requestLength - responseLength,
+            responseLength,
+            responseData.result,
+          );
         }
 
-        return responseData;
+        return getResponseObject(HttpStatus.OK, requestLength, 0, []);
       }),
     );
   }

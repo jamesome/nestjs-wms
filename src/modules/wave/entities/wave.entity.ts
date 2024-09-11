@@ -1,4 +1,3 @@
-import { Expose } from 'class-transformer';
 import { VirtualColumn } from 'src/common/decorators/virtual-column.decorator';
 import { WaveStatus } from 'src/modules/enum';
 import { TimestampedEntity } from 'src/modules/timestamped-entity';
@@ -13,11 +12,9 @@ import {
 
 @Entity({ name: 'wave' })
 export class Wave extends TimestampedEntity {
-  @Expose()
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Expose()
   @Column('int', {
     name: 'sequence',
     nullable: false,
@@ -25,7 +22,6 @@ export class Wave extends TimestampedEntity {
   })
   sequence!: number;
 
-  @Expose()
   @Column('varchar', {
     name: 'name',
     length: 50,
@@ -35,7 +31,6 @@ export class Wave extends TimestampedEntity {
   })
   name!: string;
 
-  @Expose({ name: 'status' })
   @Column({
     type: 'enum',
     enum: WaveStatus,
@@ -46,7 +41,6 @@ export class Wave extends TimestampedEntity {
   status!: WaveStatus;
 
   // TODO: 추후, User로 대체
-  @Expose({ name: 'create_worker' })
   @Column('varchar', {
     name: 'create_worker',
     length: 50,
@@ -54,11 +48,9 @@ export class Wave extends TimestampedEntity {
   })
   createWorker?: string;
 
-  @Expose({ name: 'wave_transactions' })
   @OneToMany(() => WaveTransaction, (waveTransaction) => waveTransaction.wave)
   waveTransactions!: Relation<WaveTransaction>[];
 
-  @Expose({ name: 'count_by_status' })
   @VirtualColumn({ type: 'object' })
   countByStatus?: object;
 }

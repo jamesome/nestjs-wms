@@ -38,9 +38,9 @@ export class LocationService {
 
     queryBuilder.select(['location', 'zone']).addSelect((subQuery) => {
       return subQuery
-        .select('SUM(inventory_item.quantity)', 'quantity')
-        .from(InventoryItem, 'inventory_item')
-        .where('inventory_item.location_id = location.id');
+        .select('SUM(inventoryItem.quantity)', 'quantity')
+        .from(InventoryItem, 'inventoryItem')
+        .where('inventoryItem.location_id = location.id');
     }, 'quantity');
 
     queryBuilder.leftJoin('location.zone', 'zone');
@@ -51,7 +51,7 @@ export class LocationService {
     name &&
       queryBuilder.andWhere('location.name like :name', { name: `%${name}%` });
     zoneName &&
-      queryBuilder.andWhere('zone.name like :zoneName', {
+      queryBuilder.andWhere('zone.name like :name', {
         name: `%${zoneName}%`,
       });
 

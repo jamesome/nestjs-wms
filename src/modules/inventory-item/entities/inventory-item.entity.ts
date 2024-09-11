@@ -1,4 +1,3 @@
-import { Expose } from 'class-transformer';
 import {
   Column,
   Entity,
@@ -18,7 +17,6 @@ export class InventoryItem {
   @JoinColumn({ name: 'item_id' })
   item!: Relation<Item>;
 
-  @Expose({ name: 'item_id' })
   @PrimaryColumn({ name: 'item_id' })
   itemId!: number;
 
@@ -26,7 +24,6 @@ export class InventoryItem {
   @JoinColumn({ name: 'location_id' })
   location!: Relation<Location>;
 
-  @Expose({ name: 'location_id' })
   @PrimaryColumn({ name: 'location_id' })
   locationId!: number;
 
@@ -51,7 +48,6 @@ export class InventoryItem {
   @JoinColumn({ name: 'lot_id' })
   lot!: Relation<Lot>;
 
-  @Expose({ name: 'lot_id' })
   @Column('int', {
     name: 'lot_id',
     comment: '(FK) Lot 일련번호',
