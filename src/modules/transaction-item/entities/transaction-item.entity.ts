@@ -1,3 +1,4 @@
+import { StringToBigIntTransformer } from 'src/common/transformers/string-to-bigint.transformer';
 import { SlipStatus } from 'src/modules/enum';
 import { Item } from 'src/modules/item/entities/item.entity';
 import { Location } from 'src/modules/location/entities/location.entity';
@@ -122,10 +123,7 @@ export class TransactionItem {
   // javascript의 number 타입으로 bigint 표현 시 문자열로 변환되는 경우
   @Column({
     type: 'bigint',
-    transformer: {
-      to: (value: number) => value,
-      from: (value: string) => parseInt(value, 10),
-    },
+    transformer: new StringToBigIntTransformer(),
     name: 'price',
     nullable: true,
     comment: '가격',

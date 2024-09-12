@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StockStatus } from '../enum';
+import { SlipStatus, StockStatus } from '../enum';
 import { CONNECTION } from 'src/common/constants';
 import { Transaction } from './entities/transaction.entity';
 import { I18nService } from 'nestjs-i18n';
@@ -232,7 +232,7 @@ describe('TransactionService', () => {
 
       await service.move(acceptLanguage, xClientId, moveInventoryItemDto);
 
-      expect(mockQueryRunner.manager.insert).toHaveBeenCalledTimes(2);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledTimes(2);
       expect(mockQueryRunner.manager.update).toHaveBeenCalledTimes(0);
     });
   });
@@ -244,7 +244,7 @@ describe('TransactionService', () => {
       // const locationDepartureId = 1;
       // const locationArrivalId = 2;
       // const quantity = 3;
-      // const status = StockStatus.ABNORMAL;
+      const status = SlipStatus.SCHEDULED;
       const instructItemDto: CreateShippingTransactionDto[] = [
         {
           slipNumber: '20240725-000028-3',
@@ -264,14 +264,16 @@ describe('TransactionService', () => {
             {
               transactionId: 1,
               itemId: itemId1,
-              quantity: 2,
+              orderedQuantity: 2,
               price: 10000,
+              status,
             },
             {
               transactionId: 2,
               itemId: itemId2,
-              quantity: 1,
+              orderedQuantity: 1,
               price: 4545454,
+              status,
             },
           ],
         },

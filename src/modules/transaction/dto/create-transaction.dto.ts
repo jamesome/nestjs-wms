@@ -17,6 +17,7 @@ export class CreateTransactionDto {
   @I18nValidate(IsEnum, InputType)
   inputType!: InputType;
 
+  // FIXME: SlipStatus[] 처리 필요
   @I18nValidate(IsNotEmpty)
   // @I18nValidate(IsEnum, SlipStatus)
   status!: SlipStatus | SlipStatus[];

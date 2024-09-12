@@ -1,6 +1,6 @@
 import { ValueTransformer } from 'typeorm';
 
-export class BooleanTransformer implements ValueTransformer {
+export class NumberToBooleanTransformer implements ValueTransformer {
   to(value: boolean): number {
     return value ? 1 : 0;
   }

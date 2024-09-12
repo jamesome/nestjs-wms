@@ -15,7 +15,7 @@ import { TransactionB2cOrder } from 'src/modules/transaction-b2c-order/entities/
 import { TransactionGroup } from 'src/modules/transaction-group/entities/transaction-group.entity';
 import { TransactionItem } from 'src/modules/transaction-item/entities/transaction-item.entity';
 import { WaveTransaction } from 'src/modules/wave-transaction/entities/wave-transaction.entity';
-import { BooleanTransformer } from 'src/common/transformers/BooleanTransformer';
+import { NumberToBooleanTransformer } from 'src/common/transformers/number-to-boolean.transformer';
 
 @Entity('transaction')
 export class Transaction {
@@ -103,7 +103,7 @@ export class Transaction {
     nullable: false,
     default: false,
     comment: '기본 창고 여부',
-    transformer: new BooleanTransformer(),
+    transformer: new NumberToBooleanTransformer(),
   })
   isHold!: boolean;
 

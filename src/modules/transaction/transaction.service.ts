@@ -1345,6 +1345,7 @@ export class TransactionService {
   ) {
     const { status } = updateTransactionDto;
 
+    // 컬럼별 처리 많아지면 각각 함수로 분리
     if (status) {
       const status = Object.keys(SlipStatus).find(
         (key) => SlipStatus[key] === updateTransactionDto.status,
@@ -1369,9 +1370,8 @@ export class TransactionService {
     transaction: Transaction,
     updateTransactionDto: UpdateTransactionDto,
   ) {
-    const { status } = updateTransactionDto;
-
-    if (status) {
+    // 컬럼별 처리 많아지면 각각 함수로 분리
+    if (updateTransactionDto.status) {
       const status = Object.keys(SlipStatus).find(
         (key) => SlipStatus[key] === updateTransactionDto.status,
       );

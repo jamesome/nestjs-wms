@@ -1,6 +1,6 @@
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator';
 import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
-import { StockStatus } from 'src/modules/enum';
+import { SlipStatus } from 'src/modules/enum';
 
 export class CreateTransactionItemDto {
   @I18nValidate(IsNotEmpty)
@@ -35,10 +35,12 @@ export class CreateTransactionItemDto {
   pickedQuantity?: number;
 
   @I18nValidate(IsInt)
-  price?: number | null;
+  price!: number | null;
 
-  @I18nValidate(IsEnum, StockStatus)
-  status?: StockStatus;
+  // FIXME: SlipStatus[] 처리 필요
+  @I18nValidate(IsNotEmpty)
+  // @I18nValidate(IsEnum, SlipStatus)
+  status!: SlipStatus | SlipStatus[];
 
   @IsOptional()
   remark?: string;
