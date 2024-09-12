@@ -1,6 +1,6 @@
 import { Optional } from '@nestjs/common';
 import { IsInt, IsNotEmpty, MaxLength } from 'class-validator';
-import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
+import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
 
 export class CreateTransactionB2cOrderDto {
   transactionId!: number;

@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, MaxLength } from 'class-validator';
-import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
+import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
 import { CreateItemCodeDto } from 'src/modules/item-code/dto/create-item-code.dto';
 
 export class CreateItemDto {

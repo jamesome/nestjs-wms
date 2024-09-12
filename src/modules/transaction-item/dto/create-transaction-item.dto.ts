@@ -1,5 +1,5 @@
 import { IsEnum, IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator';
-import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
+import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
 import { StockStatus } from 'src/modules/enum';
 
 export class CreateTransactionItemDto {
@@ -27,7 +27,12 @@ export class CreateTransactionItemDto {
   @I18nValidate(IsNotEmpty)
   @I18nValidate(IsInt)
   @I18nValidate(Min, 1)
-  quantity!: number;
+  orderedQuantity!: number;
+
+  @IsOptional()
+  @I18nValidate(IsInt)
+  @I18nValidate(Min, 1)
+  pickedQuantity?: number;
 
   @I18nValidate(IsInt)
   price?: number | null;

@@ -1,5 +1,4 @@
-import { Expose } from 'class-transformer';
-import { StockStatus } from 'src/modules/enum';
+import { SlipStatus } from 'src/modules/enum';
 import { Item } from 'src/modules/item/entities/item.entity';
 import { Location } from 'src/modules/location/entities/location.entity';
 import { Lot } from 'src/modules/lot/entities/lot.entity';
@@ -106,11 +105,19 @@ export class TransactionItem {
   operationTypeId?: number | null;
 
   @Column('int', {
-    name: 'quantity',
+    name: 'ordered_quantity',
     nullable: false,
-    comment: '입고, 출고, 이동 된 재고 수량',
+    comment: '입고, 이동 된 수량 및 출고지시 된 수량',
   })
-  quantity!: number;
+  orderedQuantity!: number;
+
+  @Column('int', {
+    name: 'picked_quantity',
+    nullable: false,
+    comment: '피킹지시 된 수량',
+    default: 0,
+  })
+  pickedQuantity?: number;
 
   // javascript의 number 타입으로 bigint 표현 시 문자열로 변환되는 경우
   @Column({
@@ -127,13 +134,12 @@ export class TransactionItem {
 
   @Column({
     type: 'enum',
-    enum: StockStatus,
+    enum: SlipStatus,
     name: 'status',
     nullable: false,
-    default: StockStatus.NORMAL,
     comment: '재고상태. normal => 정상, abnormal => 비정상, disposed => 폐기',
   })
-  status!: StockStatus;
+  status!: SlipStatus;
 
   @Column('text', {
     name: 'remark',
@@ -142,7 +148,6 @@ export class TransactionItem {
   })
   remark?: string;
 
-  @Expose({ name: 'stockAllocations' })
   @OneToMany(
     () => StockAllocated,
     (stockAllocated) => stockAllocated.transactionItem,

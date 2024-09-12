@@ -43,14 +43,15 @@ export type I18nTranslations = {
         "CANNOT_DELETE_WAVE": string;
         "STOCK_SHORTAGE": string;
         "fields": {
-            "item_id": string;
-            "item_code": string;
-            "location_name": string;
-            "location_departure_name": string;
-            "location_arrival_name": string;
-            "supplier_name": string;
-            "lot_number": string;
-            "operation_type_name": string;
+            "itemId": string;
+            "itemCode": string;
+            "locationName": string;
+            "locationDepartureName": string;
+            "locationArrivalName": string;
+            "supplier": string;
+            "supplierName": string;
+            "lotNumber": string;
+            "operationTypeName": string;
             "quantity": string;
         };
         "rules": {
@@ -190,8 +191,7 @@ export type I18nTranslations = {
             "Length": string;
             "IsDate": string;
             "Min": string;
-            "OneIsRequired": string;
-            "IsWithInMaxRange": string;
+            "MaxDateRange": string;
             "IsEnum": string;
         };
     };

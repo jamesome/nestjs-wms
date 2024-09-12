@@ -67,7 +67,7 @@ export class Transaction {
     name: 'status',
     nullable: false,
     comment:
-      '전표상태(작업예정, 입하완료, 검품완료, 부분입고진행, 부분입고완료, 반품완료, 입고완료, 이동중, 이동완료, 할당완료, 출고작업중, 피킹완료, 패킹완료, 출하완료, 취소완료)',
+      '전표상태. scheduled(작업예정), received(입하완료), inspected(검품완료), partial_receiving(부분입고진행), partial_in_stock(부분입고완료), returned(반품완료), in_stock(입고완료), in_transit(이동중), transferred(이동완료), allocated(출고지시완료(할당완료)), picking(피킹작업중), picking_hold(피킹보류), picking_failure(피킹실패), picked(피킹완료), packed(패킹완료), shipped(출고완료), canceled(취소완료)',
   })
   status!: SlipStatus | SlipStatus[];
 
@@ -110,18 +110,21 @@ export class Transaction {
   @OneToMany(
     () => TransactionItem,
     (transactionItem) => transactionItem.transaction,
+    { cascade: true },
   )
   transactionItems!: Relation<TransactionItem>[];
 
   @OneToOne(
     () => TransactionB2cOrder,
     (transactionB2cOrder) => transactionB2cOrder.transaction,
+    { cascade: true },
   )
   transactionB2cOrder!: Relation<TransactionB2cOrder>;
 
   @OneToMany(
     () => WaveTransaction,
     (waveTransaction) => waveTransaction.transaction,
+    { cascade: true },
   )
   waveTransactions!: Relation<WaveTransaction>[];
 }

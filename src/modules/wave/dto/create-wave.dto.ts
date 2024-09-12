@@ -1,5 +1,5 @@
 import { Min } from 'class-validator';
-import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
+import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
 import { TransformStringToNumber } from 'src/common/decorators/transform-string-to-number';
 
 export class CreateWaveDto {

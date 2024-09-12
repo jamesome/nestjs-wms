@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { CreateItemSerialDto } from 'src/modules/item-serial/dto/create-item-serial.dto';
 import { StockStatus } from 'src/modules/enum';
-import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
+import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
 
 export class ReceiveInventoryItemDto {
   @I18nValidate(IsNotEmpty)

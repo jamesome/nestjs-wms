@@ -177,7 +177,7 @@ describe('TransactionService', () => {
 
       await service.receive(acceptLanguage, xClientId, receiveInventoryItemDto);
 
-      expect(mockQueryRunner.manager.save).toHaveBeenCalledTimes(6);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledTimes(2);
       expect(mockQueryRunner.manager.update).toHaveBeenCalledTimes(0);
     });
   });

@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, ValidateNested } from 'class-validator';
-import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
+import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
 import { CreateTransactionB2cOrderDto } from 'src/modules/transaction-b2c-order/dto/create-transaction-b2c-order.dto';
 import { CreateTransactionItemDto } from 'src/modules/transaction-item/dto/create-transaction-item.dto';
 

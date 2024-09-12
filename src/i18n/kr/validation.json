@@ -63,14 +63,14 @@
     "Transaction": {
       "category": "구분",
       "inputType": "입력구분",
-      "status": "전표상태",
-      "slipNumber": "전표번호",
+      "status": "작업상태",
+      "slipNumber": "작업번호",
       "endDate": "종료일자",
-      "ordersToProcess": "$t(validation.fields.Wave.ordersToProcess)"
+      "ordersToProcess": "작업대상 수량"
     },
     "ShippingTransaction": {
-      "slipNumber": "$t(validation.fields.Transaction.slipNumber)",
-      "status": "$t(validation.fields.Transaction.status)",
+      "slipNumber": "출고작업번호",
+      "status": "출고작업상태",
       "order": "원 주문",
       "items": "작업 항목"
     },
@@ -127,8 +127,7 @@
     "Length": "[$t(validation.fields.{resource}.{property})] 항목은 {constraints.0}자 이상 {constraints.1}자 이하만 입력이 가능합니다.",
     "IsDate": "[$t(validation.fields.{resource}.{property})] 항목은 날짜 형식만 입력 가능합니다.",
     "Min": "[$t(validation.fields.{resource}.{property})] 항목은 {constraints.0} 이상만 입력 가능합니다.",
-    "OneIsRequired": "하나의 값은 반드시 존재해야 합니다.",
-    "IsWithInMaxRange": "검색가능한 최대 {constraints.1}일까지 가능합니다.",
+    "MaxDateRange": "{property}와 {constraints.0}사이의 간격은 {constraints.1}일을 초과할 수 없습니다.",
     "IsEnum": "[$t(validation.fields.{resource}.{property})] 항목은 다음 중 하나의 값만 입력 가능합니다: {options}"
   }
 }

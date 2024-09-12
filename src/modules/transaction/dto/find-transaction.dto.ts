@@ -3,20 +3,20 @@ import { CreateTransactionDto } from './create-transaction.dto';
 import { IsOptional, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Category, InputType, SlipStatus } from 'src/modules/enum';
-import { IsWithinMaxRange } from 'src/common/decorators/is-within-max-range';
-import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
+import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
 import { TransformStringToNumber } from 'src/common/decorators/transform-string-to-number';
+import { MaxDateRange } from 'src/common/decorators/validations/max-date-range.decorator';
 
 export class FindTransactionDto extends PartialType(CreateTransactionDto) {
   // 출고지시일자(created_at), 출고확정일자(completed_at)
   dateType!: string;
 
   @IsOptional()
+  @I18nValidate(MaxDateRange, 'endDate', 31)
   @Type(() => Date)
   startDate!: Date;
 
   @IsOptional()
-  @I18nValidate(IsWithinMaxRange, 'startDate', 30)
   @Type(() => Date)
   endDate!: Date;
 

@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional, Min } from 'class-validator';
-import { I18nValidate } from 'src/common/decorators/i18n-validate.decorator';
+import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
 import { TransformEmptyToNull } from 'src/common/decorators/transform-empty-to-null';
 import { StockStatus } from 'src/modules/enum';
 
@@ -21,7 +21,7 @@ export class MoveInventoryItemDto {
   operationTypeId!: number;
 
   // @I18nValidate(IsNotEmpty)
-  @I18nValidate(IsEnum)
+  @I18nValidate(IsEnum, StockStatus)
   status!: StockStatus;
 
   @I18nValidate(IsNotEmpty)

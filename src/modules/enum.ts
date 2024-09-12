@@ -29,8 +29,9 @@ export enum SlipStatus {
   IN_STOCK = 'in_stock', // 입고완료
   IN_TRANSIT = 'in_transit', // 이동중
   TRANSFERRED = 'transferred', // 이동완료
-  ALLOCATED = 'allocated', // 할당완료
-  PICKING = 'picking', // 피킹중
+  ALLOCATED = 'allocated', // 출고지시완료(할당완료)
+  PICKING = 'picking', // 피킹작업중
+  PICKING_HOLD = 'picking_hold', // 피킹보류(일시정지)
   PICKING_FAILURE = 'picking_failure', // 피킹실패
   PICKED = 'picked', // 피킹완료
   PACKED = 'packed', // 패킹완료

@@ -20,14 +20,12 @@ import {
   InputType,
   SlipStatus,
   StockAllocationMethod,
-  StockStatus,
   ZoneFilter,
 } from '../enum';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { FindTransactionDto } from './dto/find-transaction.dto';
 import { CreateShippingTransactionDto } from './dto/create-shipping-transaction.dto';
-import { CreateTransactionItemDto } from '../transaction-item/dto/create-transaction-item.dto';
 import { CreateLotDto } from '../lot/dto/create-lot.dto';
 import { IndexedCollectionItemDto } from '../inventory-item/dto/index-collection-item.dto';
 import { ReceiveInventoryItemDto } from '../inventory-item/dto/receive-inventory-item.dto';
@@ -44,6 +42,7 @@ import { In } from 'typeorm';
 import { StockAllocationRuleShop } from '../stock-allocation-rule-shop/entities/stock-allocation-rule-shop.entity';
 import { StockAllocationRuleZone } from '../stock-allocation-rule-zone/entities/stock-allocation-rule-zone.entity';
 import { PaginateDto } from '../paginate.dto';
+import { Supplier } from '../supplier/entities/supplier.entity';
 
 @Injectable()
 export class TransactionService {
@@ -52,6 +51,7 @@ export class TransactionService {
   private inventoryItemRepository: Repository<InventoryItem>;
   private itemSerialRepository: Repository<ItemSerial>;
   private stockAllocatedRepository: Repository<StockAllocated>;
+  private supplierRepository: Repository<Supplier>;
 
   constructor(
     @Inject(CONNECTION) private readonly dataSource: DataSource,
@@ -67,6 +67,7 @@ export class TransactionService {
     this.itemSerialRepository = this.dataSource.getRepository(ItemSerial);
     this.stockAllocatedRepository =
       this.dataSource.getRepository(StockAllocated);
+    this.supplierRepository = this.dataSource.getRepository(Supplier);
   }
 
   async create(createTransactionDto: CreateTransactionDto) {
@@ -113,6 +114,18 @@ export class TransactionService {
       await queryRunner.startTransaction();
 
       try {
+        const supplierEntity = await this.supplierRepository.findOne({
+          where: { id: collectionItem.supplierId },
+        });
+
+        if (!supplierEntity) {
+          throw new ManualValidationError('error.rules.NOT_EXIST', {
+            key: 'NOT_EXIST',
+            property: 'supplier',
+            value: collectionItem.supplierId ?? '',
+          });
+        }
+
         const validationErrors = await this.i18n.validate(collectionItem, {
           lang: acceptLanguage,
         });
@@ -236,8 +249,8 @@ export class TransactionService {
         transactionItem.lotId = lotId;
         transactionItem.supplierId = collectionItem.supplierId;
         transactionItem.operationTypeId = collectionItem.operationTypeId;
-        transactionItem.quantity = collectionItem.quantity;
-        transactionItem.status = collectionItem.status;
+        transactionItem.orderedQuantity = collectionItem.quantity;
+        transactionItem.status = SlipStatus.IN_STOCK;
         transactionItem.remark = collectionItem.remark;
 
         const transactionItemValidationErrors = await this.i18n.validate(
@@ -350,28 +363,21 @@ export class TransactionService {
     await queryRunner.connect();
 
     const newTransactionNumber = await this.getOneNextSequence('MV');
-    const transactionGroup = await queryRunner.manager.insert(
-      TransactionGroup,
-      {
-        transactionNumber: newTransactionNumber,
-      },
-    );
+    const transactionGroup = new TransactionGroup();
+    transactionGroup.transactionNumber = newTransactionNumber;
 
-    const createTransactionDto: CreateTransactionDto = {
-      transactionGroupId: transactionGroup.identifiers[0].id,
-      slipNumber: `${newTransactionNumber}-1`,
-      category: Category.MOVEMENT,
-      inputType: InputType.WEB_LOCATION_MOVEMENT,
-      status: SlipStatus.TRANSFERRED,
-      createWorker: 'create_worker_name', // TODO: 추후, User로 대체
-    };
+    await queryRunner.manager.save(TransactionGroup, transactionGroup);
 
-    // 오류가 나서 실패해도, 차수개념으로 무조건 생성
-    const transaction = await queryRunner.manager.insert(
-      Transaction,
-      createTransactionDto,
-    );
-    const transactionId = transaction.identifiers[0].id;
+    const transaction = new Transaction();
+    transaction.transactionGroup = transactionGroup;
+    transaction.slipNumber = `${newTransactionNumber}-1`;
+    transaction.status = SlipStatus.TRANSFERRED;
+    transaction.category = Category.MOVEMENT;
+    transaction.inputType = InputType.WEB_LOCATION_MOVEMENT;
+    transaction.createWorker = 'create_worker_name'; // TODO: 추후, User로 대체
+
+    await queryRunner.manager.save(Transaction, transaction);
+
     const total = movedItems.length;
 
     for (const [i, movedItem] of movedItems.entries()) {
@@ -475,21 +481,21 @@ export class TransactionService {
           }
         }
 
-        const createTransactionItemDto: CreateTransactionItemDto = {
-          transactionId: transactionId,
-          itemId: collectionItem.itemId,
-          locationDepartureId: collectionItem.locationDepartureId,
-          locationArrivalId: collectionItem.locationArrivalId,
-          lotId: collectionItem?.lotId,
-          supplierId: null,
-          operationTypeId: collectionItem.operationTypeId,
-          quantity: collectionItem.quantity,
-          status: collectionItem.status,
-          remark: collectionItem.remark,
-        };
+        const transactionItem = new TransactionItem();
+        transactionItem.transaction = transaction;
+        transactionItem.itemId = collectionItem.itemId;
+        transactionItem.locationDepartureId =
+          collectionItem.locationDepartureId;
+        transactionItem.locationArrivalId = collectionItem.locationArrivalId;
+        transactionItem.lotId = collectionItem?.lotId;
+        transactionItem.supplierId = null;
+        transactionItem.operationTypeId = collectionItem.operationTypeId;
+        transactionItem.orderedQuantity = collectionItem.quantity;
+        transactionItem.status = SlipStatus.TRANSFERRED;
+        transactionItem.remark = collectionItem.remark;
 
         const transactionItemValidationErrors = await this.i18n.validate(
-          createTransactionItemDto,
+          transactionItem,
           {
             lang: acceptLanguage,
           },
@@ -517,10 +523,7 @@ export class TransactionService {
           });
         }
 
-        await queryRunner.manager.insert(
-          TransactionItem,
-          createTransactionItemDto,
-        );
+        await queryRunner.manager.save(TransactionItem, transactionItem);
 
         const minusQuantity =
           departureRecord.quantity - collectionItem.quantity;
@@ -540,15 +543,14 @@ export class TransactionService {
             quantity: plusQuantity,
           });
         } else {
-          const newInventoryItem = this.inventoryItemRepository.create({
-            itemId: collectionItem.itemId,
-            locationId: collectionItem.locationArrivalId,
-            quantity: collectionItem.quantity,
-            status: collectionItem.status,
-            lotId: departureRecord?.lotId,
-          });
+          const inventoryItem = new InventoryItem();
+          inventoryItem.itemId = collectionItem.itemId;
+          inventoryItem.locationId = collectionItem.locationArrivalId;
+          inventoryItem.quantity = collectionItem.quantity;
+          inventoryItem.status = collectionItem.status;
+          inventoryItem.lotId = departureRecord?.lotId;
 
-          await queryRunner.manager.insert(InventoryItem, newInventoryItem);
+          await queryRunner.manager.insert(InventoryItem, inventoryItem);
         }
 
         await queryRunner.commitTransaction();
@@ -584,11 +586,10 @@ export class TransactionService {
       this.eventEmitter.emit('transaction.movement', transactionEvent);
     }
 
-    await this.transactionRepository.update(transactionId, {
-      completedAt: DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
-    });
+    transaction.completedAt = new Date();
+    await this.transactionRepository.save(transaction);
 
-    return failures.length ? failures : '';
+    return failures;
   }
 
   async instructShipping(
@@ -710,8 +711,8 @@ export class TransactionService {
           const transactionItem = new TransactionItem();
           transactionItem.transaction = transaction;
           transactionItem.item = itemEntity;
-          transactionItem.status = StockStatus.NORMAL;
-          transactionItem.quantity = item.quantity;
+          transactionItem.status = SlipStatus.SCHEDULED;
+          transactionItem.orderedQuantity = item.orderedQuantity;
           transactionItem.price = item.price;
           transactionItem.remark = item.remark;
 
@@ -771,7 +772,7 @@ export class TransactionService {
       }
     }
 
-    return failures.length ? failures : '';
+    return failures;
   }
 
   // async ship(shipItemDto: ShipItemDto[]) {
@@ -920,8 +921,8 @@ export class TransactionService {
         .groupBy('subTransaction.id')
         .having(
           orderType === 'single'
-            ? 'COUNT(subTransactionItem.id) = 1 AND SUM(subTransactionItem.quantity) = 1'
-            : 'COUNT(subTransactionItem.id) > 1 AND SUM(subTransactionItem.quantity) > 1',
+            ? 'COUNT(subTransactionItem.id) = 1 AND SUM(subTransactionItem.orderedQuantity) = 1'
+            : 'COUNT(subTransactionItem.id) > 1 AND SUM(subTransactionItem.orderedQuantity) > 1',
         );
 
       queryBuilder.andWhere(`transaction.id IN (${subQuery.getQuery()})`);
@@ -1079,7 +1080,7 @@ export class TransactionService {
 
     for (const transactionItem of transactionItems) {
       transactionItemIds.push(transactionItem.id);
-      let remainingQuantity = transactionItem.quantity;
+      let remainingQuantity = transactionItem.orderedQuantity;
 
       // 품목 별 재고 filtering
       let filteredInventoryItems = inventoryItems.filter(
@@ -1093,7 +1094,7 @@ export class TransactionService {
           item: {
             name: transactionItem.item.name,
           },
-          quantity: transactionItem.quantity,
+          quantity: transactionItem.orderedQuantity,
           error: this.i18n.t('error.STOCK_SHORTAGE', {
             lang: acceptLanguage,
           }),
@@ -1177,7 +1178,7 @@ export class TransactionService {
           item: {
             name: transactionItem.item.name,
           },
-          quantity: transactionItem.quantity,
+          quantity: transactionItem.orderedQuantity,
           error: this.i18n.t('error.STOCK_SHORTAGE', {
             lang: acceptLanguage,
           }),
@@ -1199,9 +1200,13 @@ export class TransactionService {
     }
 
     // 모든 품목이 온전히 할당 됐을 때, 전표상태 변경
-    // 출고에정(SlipStatus.SCHEDULED) -> 할당완료(SlipStatus.ALLOCATED)
+    // 주문 :: 출고예정(SlipStatus.SCHEDULED) -> 출고지시완료(할당완료)(SlipStatus.ALLOCATED)
+    // 주문의품목 :: 출고예정(SlipStatus.SCHEDULED) -> 출고지시완료(할당완료)(SlipStatus.ALLOCATED)
     if (transactionItemsLength === isAllocationSuccessCount) {
       transaction.status = SlipStatus.ALLOCATED;
+      transaction.transactionItems.forEach((item: { status: SlipStatus }) => {
+        item.status = SlipStatus.ALLOCATED;
+      });
     } else {
       allocations = allocations.filter(
         (allocation) =>
@@ -1319,6 +1324,9 @@ export class TransactionService {
       });
 
       transaction.status = SlipStatus.SCHEDULED;
+      transaction.transactionItems.forEach((item: { status: SlipStatus }) => {
+        item.status = SlipStatus.SCHEDULED;
+      });
       await this.transactionRepository.save(transaction);
 
       await queryRunner.commitTransaction();

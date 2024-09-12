@@ -40,16 +40,16 @@ export class InventoryItemService {
       .leftJoinAndSelect(
         'stock_allocated',
         'sa',
-        'inventoryItem.item_id = sa.item_id AND inventoryItem.location_id = sa.location_id AND (inventoryItem.lot_id = sa.lot_id OR inventoryItem.lot_id IS NULL)',
+        'inventoryItem.itemId = sa.itemId AND inventoryItem.locationId = sa.locationId AND (inventoryItem.lotId = sa.lotId OR inventoryItem.lotId IS NULL)',
       )
       .select([
         'zone.id as zoneId',
-        'inventoryItem.item_id AS itemId',
-        'inventoryItem.location_id AS locationId',
-        'inventoryItem.lot_id AS lotId',
+        'inventoryItem.itemId AS itemId',
+        'inventoryItem.locationId AS locationId',
+        'inventoryItem.lotId AS lotId',
         'inventoryItem.quantity - COALESCE(SUM(sa.quantity), 0) AS availableQuantity',
       ])
-      .where('zone.warehouse_id = :warehouseId', { warehouseId })
+      .where('zone.warehouseId = :warehouseId', { warehouseId })
       .groupBy(
         'inventoryItem.itemId, inventoryItem.locationId, inventoryItem.lotId, inventoryItem.quantity',
       )

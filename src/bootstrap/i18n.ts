@@ -1,6 +1,5 @@
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
-import { snakeCase } from 'lodash';
 
 export default function useI18n(app: NestExpressApplication) {
   app.useGlobalPipes(
@@ -19,7 +18,7 @@ export default function useI18n(app: NestExpressApplication) {
           delete error.target;
           return {
             ...error,
-            property: snakeCase(error.property),
+            property: error.property,
           };
         }),
     }),
