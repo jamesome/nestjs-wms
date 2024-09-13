@@ -42,6 +42,17 @@ export class AlterTableTransctionItem1726033815809
       }),
     );
 
+    await queryRunner.addColumn(
+      'transaction_item',
+      new TableColumn({
+        name: 'image_url',
+        type: 'varchar',
+        length: '500',
+        isNullable: true,
+        comment: '품목 이미지 URL',
+      }),
+    );
+
     await queryRunner.changeColumn(
       'transaction_item',
       'quantity',
@@ -66,7 +77,8 @@ export class AlterTableTransctionItem1726033815809
       }),
     );
 
-    await queryRunner.dropColumn('transaction', 'picked_quantity');
+    await queryRunner.dropColumn('transaction_item', 'image_url');
+    await queryRunner.dropColumn('transaction_item', 'picked_quantity');
 
     await queryRunner.changeColumn(
       'transaction_item',

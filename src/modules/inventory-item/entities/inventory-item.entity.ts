@@ -11,46 +11,35 @@ import { Item } from 'src/modules/item/entities/item.entity';
 import { Location } from 'src/modules/location/entities/location.entity';
 import { Lot } from 'src/modules/lot/entities/lot.entity';
 
-@Entity({ name: 'inventory_item' })
+@Entity()
 export class InventoryItem {
   @ManyToOne(() => Item, (item) => item.inventoryItems)
   @JoinColumn({ name: 'item_id' })
   item!: Relation<Item>;
 
-  @PrimaryColumn({ name: 'item_id' })
+  @PrimaryColumn()
   itemId!: number;
 
   @ManyToOne(() => Location, (location) => location.inventoryItems)
   @JoinColumn({ name: 'location_id' })
   location!: Relation<Location>;
 
-  @PrimaryColumn({ name: 'location_id' })
+  @PrimaryColumn()
   locationId!: number;
 
-  @Column('int', {
-    name: 'quantity',
-    nullable: false,
-    comment: '재고',
-  })
+  // 재고수량
+  @Column()
   quantity!: number;
 
-  @Column({
-    type: 'enum',
-    enum: StockStatus,
-    name: 'status',
-    nullable: false,
-    default: StockStatus.NORMAL,
-    comment: '재고상태. normal => 정상, abnormal => 비정상, disposed => 폐기',
-  })
+  // 재고상태
+  @Column({ default: StockStatus.NORMAL })
   status!: StockStatus;
 
   @ManyToOne(() => Lot, (lot) => lot.inventoryItems, { eager: true })
   @JoinColumn({ name: 'lot_id' })
   lot!: Relation<Lot>;
 
-  @Column('int', {
-    name: 'lot_id',
-    comment: '(FK) Lot 일련번호',
-  })
+  // (FK) Lot 일련번호
+  @Column({ type: 'int', nullable: true })
   lotId?: number | null;
 }

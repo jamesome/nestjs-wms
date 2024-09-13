@@ -15,9 +15,8 @@ import { TransactionB2cOrder } from 'src/modules/transaction-b2c-order/entities/
 import { TransactionGroup } from 'src/modules/transaction-group/entities/transaction-group.entity';
 import { TransactionItem } from 'src/modules/transaction-item/entities/transaction-item.entity';
 import { WaveTransaction } from 'src/modules/wave-transaction/entities/wave-transaction.entity';
-import { NumberToBooleanTransformer } from 'src/common/transformers/number-to-boolean.transformer';
 
-@Entity('transaction')
+@Entity()
 export class Transaction {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -29,82 +28,37 @@ export class Transaction {
   @JoinColumn({ name: 'transaction_group_id' })
   transactionGroup!: Relation<TransactionGroup>;
 
-  @Column({
-    name: 'transaction_group_id',
-    nullable: false,
-    comment: '(FK) 품목 일련번호',
-  })
+  @Column()
   transactionGroupId!: number;
 
-  @Column('varchar', {
-    name: 'slip_number',
-    length: 50,
-    comment: '전표번호(규칙에 따른 생성)',
-  })
+  @Column({ length: 50 })
   slipNumber!: string;
 
-  @Column({
-    type: 'enum',
-    enum: Category,
-    name: 'category',
-    nullable: false,
-    comment: '구분. 입고 | 출고 | 이동',
-  })
+  @Column()
   category!: Category;
 
-  @Column({
-    type: 'enum',
-    enum: InputType,
-    name: 'input_type',
-    nullable: false,
-    comment: '입고 유형. receiving(개별입고)...',
-  })
+  // 입력구분
+  @Column()
   inputType!: InputType;
 
-  @Column({
-    type: 'enum',
-    enum: SlipStatus,
-    name: 'status',
-    nullable: false,
-    comment:
-      '전표상태. scheduled(작업예정), received(입하완료), inspected(검품완료), partial_receiving(부분입고진행), partial_in_stock(부분입고완료), returned(반품완료), in_stock(입고완료), in_transit(이동중), transferred(이동완료), allocated(출고지시완료(할당완료)), picking(피킹작업중), picking_hold(피킹보류), picking_failure(피킹실패), picked(피킹완료), packed(패킹완료), shipped(출고완료), canceled(취소완료)',
-  })
-  status!: SlipStatus | SlipStatus[];
+  @Column()
+  status!: SlipStatus;
 
   // TODO: 추후, User로 대체
-  @Column('varchar', {
-    name: 'create_worker',
-    length: 50,
-    comment: '창고 등록 작업자',
-  })
+  @Column({ length: 50 })
   createWorker!: string;
 
-  @CreateDateColumn({
-    name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
+  @CreateDateColumn()
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt?: Date | null = null;
+  @UpdateDateColumn()
+  updatedAt?: Date;
 
-  @Column({
-    type: 'timestamp',
-    name: 'completed_at',
-    nullable: true,
-    comment: '(입고, 출고, 이동) 완료일자',
-  })
+  @Column({ type: 'timestamp', nullable: true })
   completedAt?: Date | null = null;
 
-  @Column('tinyint', {
-    name: 'is_hold',
-    width: 1,
-    nullable: false,
-    default: false,
-    comment: '기본 창고 여부',
-    transformer: new NumberToBooleanTransformer(),
-  })
+  // 작업 보류 여부
+  @Column()
   isHold!: boolean;
 
   @OneToMany(

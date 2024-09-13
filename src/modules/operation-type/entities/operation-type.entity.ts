@@ -9,44 +9,25 @@ import {
 import { Category } from 'src/modules/enum';
 import { TransactionItem } from 'src/modules/transaction-item/entities/transaction-item.entity';
 
-@Entity({ name: 'operation_type' })
+@Entity()
 @Index(['category', 'name'], { unique: true }) // 유니크 => [카테고리 + 재고작업구분명]
 export class OperationType {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({
-    type: 'enum',
-    enum: Category,
-    name: 'category',
-    nullable: false,
-    comment: '구분. incoming(입고), outgoing(출고), movement(이동)',
-  })
+  @Column()
   category!: Category;
 
-  @Column('varchar', {
-    name: 'name',
-    length: 50,
-    unique: true,
-    nullable: false,
-    comment: '재고작업구분명',
-  })
+  @Column({ length: 50 })
   name!: string;
 
-  @Column('tinyint', {
-    name: 'is_default',
-    nullable: false,
-    default: 0,
-    comment: '기본 노출로 선택된 값',
-  })
-  isDefault!: number;
+  // 기본 노출 여부
+  @Column()
+  isDefault!: boolean;
 
-  @Column('tinyint', {
-    name: 'reserved',
-    nullable: false,
-    comment: '예약값. 미리 정의 된 재고작업구분들.',
-  })
-  reserved!: number;
+  // 예약값. 미리 정의 된 재고작업구분들.
+  @Column()
+  reserved!: boolean;
 
   @OneToMany(
     () => TransactionItem,

@@ -35,7 +35,7 @@ export class StockAllocationRuleService {
     const stockAllocationRuleEntity =
       await this.stockAllocationRuleRepository.findOne({
         select: { priority: true },
-        where: { isDefault: 0 },
+        where: { isDefault: false },
         order: {
           priority: 'DESC',
         },
@@ -82,7 +82,7 @@ export class StockAllocationRuleService {
       stockAllocationRule.name = stockAllocationRuleDto.name;
       stockAllocationRule.method = stockAllocationRuleDto.method;
       stockAllocationRule.zoneFilter = stockAllocationRuleDto.zoneFilter;
-      stockAllocationRule.isDefault = 0;
+      stockAllocationRule.isDefault = false;
 
       await queryRunner.manager.save(StockAllocationRule, stockAllocationRule);
 

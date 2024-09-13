@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TransactionItemController } from './transaction-item.controller';
-import { TransactionItemService } from './transaction-item.service';
+import { StockAllocatedController } from './stock-allocated.controller';
 import { CONNECTION } from 'src/common/constants';
+import { StockAllocatedService } from './stock-allocated.service';
 
-describe('TransactionItemController', () => {
-  let controller: TransactionItemController;
+describe('StockAllocatedController', () => {
+  let controller: StockAllocatedController;
 
   beforeEach(async () => {
     const mockDataSource = {
@@ -18,19 +18,17 @@ describe('TransactionItemController', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [TransactionItemController],
+      controllers: [StockAllocatedController],
       providers: [
         {
           provide: CONNECTION,
           useValue: mockDataSource,
         },
-        TransactionItemService,
+        StockAllocatedService,
       ],
     }).compile();
 
-    controller = module.get<TransactionItemController>(
-      TransactionItemController,
-    );
+    controller = module.get<StockAllocatedController>(StockAllocatedController);
   });
 
   it('should be defined', () => {

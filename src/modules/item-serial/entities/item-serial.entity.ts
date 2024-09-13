@@ -9,7 +9,7 @@ import {
   Unique,
 } from 'typeorm';
 
-@Entity({ name: 'item_serial' })
+@Entity()
 @Unique(['serialNo'])
 export class ItemSerial {
   @PrimaryGeneratedColumn()
@@ -19,15 +19,12 @@ export class ItemSerial {
   @JoinColumn({ name: 'item_id' })
   item!: Relation<Item>;
 
-  @Column({ name: 'item_id' })
+  @Column()
   itemId!: number;
 
-  @Column('varchar', {
-    name: 'serial_no',
+  @Column({
     length: 50,
     unique: true,
-    nullable: false,
-    comment: 'Serial Number',
   })
   serialNo?: string;
 }

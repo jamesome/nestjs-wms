@@ -16,7 +16,6 @@ import {
   ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
-  ApiHeader,
   ApiNoContentResponse,
   ApiQuery,
   ApiTags,
@@ -30,10 +29,6 @@ import { EntityByIdPipe } from 'src/common/pipes/entity-by-id.pipe';
 
 @Controller('warehouses')
 @ApiTags('Warehouse API')
-@ApiHeader({
-  name: 'Accept-Language',
-  description: '국가코드를 통해 국제화 된 언어 노출',
-})
 export class WarehouseController {
   constructor(private readonly warehouseService: WarehouseService) {}
 

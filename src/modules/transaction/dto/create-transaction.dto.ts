@@ -20,7 +20,7 @@ export class CreateTransactionDto {
   // FIXME: SlipStatus[] 처리 필요
   @I18nValidate(IsNotEmpty)
   // @I18nValidate(IsEnum, SlipStatus)
-  status!: SlipStatus | SlipStatus[];
+  status!: SlipStatus;
 
   createWorker!: string;
 

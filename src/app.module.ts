@@ -33,7 +33,6 @@ import { LotModule } from './modules/lot/lot.module';
 import { OperationTypeModule } from './modules/operation-type/operation-type.module';
 import { TransactionGroupModule } from './modules/transaction-group/transaction-group.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
-import { TransactionItemModule } from './modules/transaction-item/transaction-item.module';
 import { TransactionB2cOrderModule } from './modules/transaction-b2c-order/transaction-b2c-order.module';
 import { CustomHttpExceptionFilter } from './common/filters/custom-http-exception.filter';
 import { DatabaseExceptionFilter } from './common/filters/database-exception.filter';
@@ -105,10 +104,10 @@ import { StockAllocatedModule } from './modules/stock-allocated/stock-allocated.
           SupplierModule,
           OperationTypeModule,
           TransactionModule,
-          TransactionItemModule,
           InventoryItemModule,
           ShipperModule,
           WaveModule,
+          StockAllocatedModule,
           StockAllocationRuleModule,
           ShopModule,
         ],
@@ -126,16 +125,15 @@ import { StockAllocatedModule } from './modules/stock-allocated/stock-allocated.
     OperationTypeModule,
     TransactionGroupModule,
     TransactionModule,
-    TransactionItemModule,
     TransactionB2cOrderModule,
     ShipperModule,
     WaveModule,
     WaveTransactionModule,
+    StockAllocatedModule,
     StockAllocationRuleModule,
     StockAllocationRuleShopModule,
     StockAllocationRuleZoneModule,
     ShopModule,
-    StockAllocatedModule,
   ],
   controllers: [AppController],
   providers: [

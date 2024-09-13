@@ -61,7 +61,7 @@ describe('WarehouseService', () => {
       detailAddress: '',
       manager: '',
       contact: '',
-      isDefault: 1,
+      isDefault: true,
     };
 
     const createdWarehouse = {
@@ -95,7 +95,7 @@ describe('WarehouseService', () => {
       const warehouse = {
         id: 123,
         name: 'Warehouse 1',
-        isDefault: 0,
+        isDefault: false,
       } as Warehouse;
 
       warehouseRepository.findOne?.mockResolvedValue(warehouse);

@@ -9,19 +9,13 @@ import {
   Relation,
 } from 'typeorm';
 
-@Entity({ name: 'supplier' })
+@Entity()
 @Unique(['name'])
 export class Supplier {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column('varchar', {
-    name: 'name',
-    length: 100,
-    unique: true,
-    nullable: false,
-    comment: '공급처명',
-  })
+  @Column({ length: 100, unique: true })
   name!: string;
 
   @OneToMany(() => Lot, (lot) => lot.supplier)

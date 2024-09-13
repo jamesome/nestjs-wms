@@ -47,6 +47,7 @@ import { Supplier } from '../supplier/entities/supplier.entity';
 @Injectable()
 export class TransactionService {
   private transactionRepository: Repository<Transaction>;
+  private transactionItemRepository: Repository<TransactionItem>;
   private transactionGroupRepository: Repository<TransactionGroup>;
   private inventoryItemRepository: Repository<InventoryItem>;
   private itemSerialRepository: Repository<ItemSerial>;
@@ -61,6 +62,8 @@ export class TransactionService {
     private eventEmitter: EventEmitter2,
   ) {
     this.transactionRepository = this.dataSource.getRepository(Transaction);
+    this.transactionItemRepository =
+      this.dataSource.getRepository(TransactionItem);
     this.transactionGroupRepository =
       this.dataSource.getRepository(TransactionGroup);
     this.inventoryItemRepository = this.dataSource.getRepository(InventoryItem);
@@ -715,6 +718,7 @@ export class TransactionService {
           transactionItem.orderedQuantity = item.orderedQuantity;
           transactionItem.price = item.price;
           transactionItem.remark = item.remark;
+          transactionItem.imageUrl = item.imageUrl;
 
           const transactionItemValidationErrors = await this.i18n.validate(
             transactionItem,
@@ -852,7 +856,7 @@ export class TransactionService {
       startDate,
       endDate,
       category,
-      status,
+      statuses,
       itemName,
       recipient,
       contact,
@@ -866,9 +870,9 @@ export class TransactionService {
       queryBuilder.andWhere('transaction.category = :category', {
         category: Category.SHIPPING,
       });
-    status &&
-      queryBuilder.andWhere('transaction.status IN (:...status)', {
-        status,
+    statuses &&
+      queryBuilder.andWhere('transaction.status IN (:...statuses)', {
+        statuses,
       });
 
     if (ids) {
@@ -1137,7 +1141,7 @@ export class TransactionService {
           stockAllocated.item = transactionItem.item;
           stockAllocated.locationId = filteredInventoryItem.locationId;
           stockAllocated.lotId = filteredInventoryItem.lotId;
-          stockAllocated.quantity = allocatedQuantity;
+          stockAllocated.allocatedQuantity = allocatedQuantity;
 
           allocations.push(stockAllocated);
 
@@ -1165,7 +1169,8 @@ export class TransactionService {
             );
 
             if (relatedInventoryItem) {
-              relatedInventoryItem.availableQuantity += allocation.quantity;
+              relatedInventoryItem.availableQuantity +=
+                allocation.allocatedQuantity;
             }
 
             return false;
@@ -1343,27 +1348,28 @@ export class TransactionService {
     transactions: Transaction[],
     updateTransactionDto: UpdateTransactionDto,
   ) {
-    const { status } = updateTransactionDto;
-
     // 컬럼별 처리 많아지면 각각 함수로 분리
-    if (status) {
+    if (updateTransactionDto.status) {
       const status = Object.keys(SlipStatus).find(
         (key) => SlipStatus[key] === updateTransactionDto.status,
       );
+      const statusArr: string[] = ['picked', 'packed', 'shipped'];
 
-      // const transactionIds = transactions.map((transaction) => transaction.id);
+      // TODO: 데이터가 eager로딩 되어있어, save사용 시 모든 엔티티가 수정됨
+      for (const transaction of transactions) {
+        await this.transactionRepository.update(transaction.id, {
+          status: status as SlipStatus,
+        });
 
-      // await this.transactionRepository.update(
-      //   { id: In(transactionIds) },
-      //   { status: SlipStatus[status as SlipStatus] },
-      // );
-
-      transactions.forEach((transaction) => {
-        transaction.status = status as SlipStatus;
-      });
+        if (statusArr.includes(status as SlipStatus)) {
+          for (const transactionItem of transaction.transactionItems) {
+            await this.transactionItemRepository.update(transactionItem.id, {
+              status: status as SlipStatus,
+            });
+          }
+        }
+      }
     }
-
-    await this.transactionRepository.save(transactions);
   }
 
   async patch(
@@ -1375,10 +1381,20 @@ export class TransactionService {
       const status = Object.keys(SlipStatus).find(
         (key) => SlipStatus[key] === updateTransactionDto.status,
       );
+      const statusArr: string[] = ['picked', 'packed', 'shipped'];
 
-      transaction.status = status as SlipStatus;
+      // TODO: 데이터가 eager로딩 되어있어, save사용 시 모든 엔티티가 수정됨
+      await this.transactionRepository.update(transaction.id, {
+        status: status as SlipStatus,
+      });
+
+      if (statusArr.includes(updateTransactionDto.status as string)) {
+        for (const transactionItem of transaction.transactionItems) {
+          await this.transactionItemRepository.update(transactionItem.id, {
+            status: status as SlipStatus,
+          });
+        }
+      }
     }
-
-    await this.transactionRepository.save(transaction);
   }
 }

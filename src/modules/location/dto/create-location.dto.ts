@@ -13,5 +13,5 @@ export class CreateLocationDto {
   remark?: string;
 
   @IsOptional()
-  isDefault?: number;
+  isDefault?: boolean;
 }

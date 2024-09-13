@@ -10,84 +10,45 @@ import {
   Unique,
 } from 'typeorm';
 
-@Entity({ name: 'warehouse' })
+@Entity()
 @Unique(['name', 'code'])
 export class Warehouse extends TimestampedEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column('varchar', {
-    name: 'name',
-    length: 100,
-    unique: true,
-    nullable: false,
-    comment: '창고명',
-  })
+  @Column({ length: 100, unique: true })
   name!: string;
 
-  @Column('varchar', {
-    name: 'code',
-    length: 100,
-    unique: true,
-    nullable: true,
-    comment: '창고코드',
-  })
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
   code?: string | null;
 
-  @Column('varchar', {
-    name: 'post_code',
-    length: 10,
-    nullable: true,
-    comment: '우편번호',
-  })
+  @Column({ length: 10 })
   postCode?: string;
 
-  @Column('varchar', {
-    name: 'address',
-    length: 500,
-    nullable: true,
-    comment: '주소',
-  })
+  // 주소
+  @Column({ length: 500, nullable: true })
   address?: string;
 
-  @Column('varchar', {
-    name: 'detail_address',
-    length: 500,
-    nullable: true,
-    comment: '상세주소',
-  })
+  // 상세주소
+  @Column({ length: 500, nullable: true })
   detailAddress?: string;
 
-  @Column('varchar', {
-    name: 'manager',
-    length: 100,
-    nullable: true,
-    comment: '담당자',
-  })
+  // 담당자
+  @Column({ length: 100, nullable: true })
   manager?: string;
 
-  @Column('varchar', {
-    name: 'contact',
-    length: 20,
-    nullable: true,
-    comment: '연락처',
-  })
+  // 연락처
+  @Column({ length: 20, nullable: true })
   contact?: string;
 
+  // 창고 등록 작업자
   // TODO: 추후, User로 대체
-  @Column('varchar', {
-    name: 'create_worker',
-    length: 50,
-    comment: '창고 등록 작업자',
-  })
+  @Column({ length: 50 })
   createWorker?: string;
 
-  @Column('tinyint', {
-    name: 'is_default',
-    nullable: true,
-    comment: '기본 창고 여부',
-  })
-  isDefault!: number;
+  // 기본 창고 여부
+  @Column()
+  isDefault!: boolean;
 
   @OneToMany(() => Zone, (zone) => zone.warehouse, {
     cascade: true,

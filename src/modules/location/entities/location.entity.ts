@@ -14,7 +14,7 @@ import { TransactionItem } from 'src/modules/transaction-item/entities/transacti
 import { VirtualColumn } from 'src/common/decorators/virtual-column.decorator';
 import { StockAllocated } from 'src/modules/stock-allocated/entities/stock-allocated.entity';
 
-@Entity({ name: 'location' })
+@Entity()
 export class Location extends TimestampedEntity {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -23,39 +23,27 @@ export class Location extends TimestampedEntity {
   @JoinColumn({ name: 'zone_id' })
   zone!: Relation<Zone>;
 
-  @Column({ name: 'zone_id' })
+  @Column()
   zoneId!: number;
 
-  @Column('varchar', {
-    name: 'name',
+  // 로케이션명
+  @Column({
     length: 100,
     unique: true,
-    nullable: false,
-    comment: '로케이션명',
   })
   name!: string;
 
-  @Column('text', {
-    name: 'remark',
-    nullable: true,
-    comment: '비고',
-  })
+  @Column('text')
   remark?: string;
 
+  // 창고 등록 작업자
   // TODO: 추후, User로 대체
-  @Column('varchar', {
-    name: 'create_worker',
-    length: 50,
-    comment: '창고 등록 작업자',
-  })
+  @Column({ length: 50 })
   createWorker?: string;
 
-  @Column('tinyint', {
-    name: 'is_default',
-    nullable: true,
-    comment: '기본 창고 여부',
-  })
-  isDefault!: number;
+  // 기본 창고 여부
+  @Column()
+  isDefault!: boolean;
 
   @OneToMany(() => InventoryItem, (inventoryItem) => inventoryItem.location)
   inventoryItems!: Relation<InventoryItem>[];
@@ -76,9 +64,6 @@ export class Location extends TimestampedEntity {
   @VirtualColumn({ type: 'number' })
   quantity!: number;
 
-  @OneToMany(
-    () => StockAllocated,
-    (stockAllStockAllocated) => stockAllStockAllocated.location,
-  )
+  @OneToMany(() => StockAllocated, (stockAllocated) => stockAllocated.location)
   stockAllocations!: Relation<StockAllocated>[];
 }

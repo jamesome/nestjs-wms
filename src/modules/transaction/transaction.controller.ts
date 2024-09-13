@@ -19,7 +19,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
-  ApiHeader,
+  ApiExcludeEndpoint,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
@@ -59,10 +59,6 @@ import { PaginateDto } from '../paginate.dto';
 
 @Controller(['transactions', 'warehouses/:warehouseId/transactions'])
 @ApiTags('Transaction API')
-@ApiHeader({
-  name: 'Accept-Language',
-  description: '국가코드를 통해 국제화 된 언어 노출',
-})
 export class TransactionController {
   private itemCodeRepository: Repository<ItemCode>;
   private locationRepository: Repository<Location>;
@@ -188,7 +184,11 @@ export class TransactionController {
   ) {
     // 출고예정정보 내역, 출고지시 내역
     // TODO: 출고~ 내역에서 status가 없을 때 어떻게 할지
-    if (findTransactionDto.status && findTransactionDto.status.length > 0) {
+    const { statuses } = findTransactionDto;
+    if (statuses) {
+      findTransactionDto.statuses =
+        typeof statuses === 'string' ? [statuses] : statuses;
+
       return await this.transactionService.getManyShippingList(
         findTransactionDto,
       );
@@ -778,6 +778,7 @@ export class TransactionController {
     })) as IndexedCollectionItemDto<T>[];
   }
 
+  @ApiExcludeEndpoint()
   @Post('shipping:action')
   @UseInterceptors(new PartialResponseInterceptor())
   async handleShippingAction(
@@ -802,9 +803,7 @@ export class TransactionController {
     }
   }
 
-  // @Post('shipping:allocate-stocks')
   @ApiOperation({ summary: '출고지시' })
-  // @UseInterceptors(new PartialResponseInterceptor())
   @ApiOkResponse()
   async allocateToStock(
     @Req() request: Request,
@@ -813,7 +812,7 @@ export class TransactionController {
   ) {
     // 출고이면서, 작업예정 상태만 출고지시(재고할당) 가능.
     findTransactionDto.category = Category.SHIPPING;
-    findTransactionDto.status = [SlipStatus.SCHEDULED];
+    findTransactionDto.status = SlipStatus.SCHEDULED;
 
     const paginate = new PaginateDto();
     paginate.sortBy = [['transaction.id', 'ASC']];
@@ -841,12 +840,12 @@ export class TransactionController {
 
     let inventoryItems =
       await this.inventoryItemService.getAvailableStockList(warehouseId);
-
+    console.log(inventoryItems);
     if (!inventoryItems || inventoryItems.length === 0) {
       throw new CustomHttpException(
         {
           error: 'Not Found',
-          message: 'ENTITY_NOT_FOUND',
+          message: 'rules.NOT_ENOUGH',
           statusCode: HttpStatus.NOT_FOUND,
         },
         HttpStatus.NOT_FOUND,
@@ -904,16 +903,14 @@ export class TransactionController {
     };
   }
 
-  // @Post('shipping:deallocate-stocks')
   @ApiOperation({ summary: '출고지시 취소' })
-  // @UseInterceptors(new PartialResponseInterceptor())
   @ApiOkResponse()
   async deallocateToStock(
     @Body('filters') findTransactionDto: FindTransactionDto,
   ) {
     // 출고이면서, 할당완료 상태만 출고지시 취소(재고할당 취소) 가능.
     findTransactionDto.category = Category.SHIPPING;
-    findTransactionDto.status = [SlipStatus.ALLOCATED];
+    findTransactionDto.status = SlipStatus.ALLOCATED;
 
     const transactions =
       await this.transactionService.getManyShippingList(findTransactionDto);

@@ -6,6 +6,7 @@ import { options } from 'src/database/tenant.dataSource';
 import { config as dotenvConfig } from 'dotenv';
 import { ConfigService } from '@nestjs/config';
 import { CONNECTION } from 'src/common/constants';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 dotenvConfig();
 
@@ -26,6 +27,7 @@ const connectionFactory = {
       ...options,
       database,
       entities: ['dist/modules/**/entities/*.entity{.ts,.js}'],
+      namingStrategy: new SnakeNamingStrategy(),
       extra: {
         connectionLimit: configService.get<number>('DB_CONN_IDLETIMEOUT', 10),
         maxIdle: configService.get<number>('DB_CONN_MAXIDLE', 10),

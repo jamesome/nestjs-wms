@@ -8,17 +8,12 @@ import {
   Relation,
 } from 'typeorm';
 
-@Entity({ name: 'shipper' })
+@Entity()
 export class Shipper {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column('varchar', {
-    name: 'name',
-    length: 50,
-    nullable: false,
-    comment: '화주명',
-  })
+  @Column({ length: 50 })
   name!: string;
 
   @OneToMany(() => Item, (item) => item.shipper)

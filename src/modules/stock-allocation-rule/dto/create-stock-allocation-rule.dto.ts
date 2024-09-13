@@ -17,7 +17,7 @@ export class CreateStockAllocationRuleDto {
   @I18nValidate(IsNotEmpty)
   zoneFilter!: string;
 
-  isDefault?: number;
+  isDefault?: boolean;
 
   @Optional()
   shopIds!: number[];

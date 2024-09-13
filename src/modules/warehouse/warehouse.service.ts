@@ -29,8 +29,6 @@ export class WarehouseService {
 
   async findAll(query: PaginateQuery, findWarehouseDto: FindWarehouseDto) {
     const { id, name, code, address, isDefault } = findWarehouseDto;
-    console.log(isDefault);
-    console.log(isDefault);
     const queryBuilder =
       this.warehouseRepository.createQueryBuilder('warehouse');
 
@@ -71,8 +69,8 @@ export class WarehouseService {
         // 기존의 isDefault가 true인 레코드를 false로 업데이트
         await queryRunner.manager.update(
           Warehouse,
-          { isDefault: 1 },
-          { isDefault: 0 },
+          { isDefault: true },
+          { isDefault: false },
         );
       }
 

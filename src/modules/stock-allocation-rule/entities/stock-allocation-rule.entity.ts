@@ -14,7 +14,7 @@ import { StockAllocationRuleZone } from 'src/modules/stock-allocation-rule-zone/
 import { TimestampedEntity } from 'src/modules/timestamped-entity';
 import { Warehouse } from 'src/modules/warehouse/entities/warehouse.entity';
 
-@Entity({ name: 'stock_allocation_rule' })
+@Entity()
 export class StockAllocationRule extends TimestampedEntity {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -26,7 +26,7 @@ export class StockAllocationRule extends TimestampedEntity {
   @JoinColumn({ name: 'warehouse_id' })
   warehouse!: Relation<Warehouse>;
 
-  @Column({ name: 'warehouse_id' })
+  @Column()
   warehouseId!: number;
 
   @ManyToOne(() => Shipper, (shipper) => shipper.stockAllocationRules, {
@@ -37,48 +37,27 @@ export class StockAllocationRule extends TimestampedEntity {
   @JoinColumn({ name: 'shipper_id' })
   shipper!: Relation<Shipper> | null;
 
-  @Column({ name: 'shipper_id', nullable: true })
+  @Column({ type: 'int', nullable: true })
   shipperId!: number | null;
 
-  @Column({
-    name: 'priority',
-    nullable: false,
-    comment: '우선순위(정렬순서)',
-  })
+  // 우선순위(정렬순서)
+  @Column()
   priority!: number;
 
-  @Column('varchar', {
-    name: 'name',
-    length: 50,
-    nullable: false,
-    comment: '룰 옵션명',
-  })
+  @Column({ length: 50 })
   name!: string;
 
-  @Column({
-    type: 'enum',
-    enum: StockAllocationMethod,
-    name: 'method',
-    nullable: false,
-    comment: '재고할당 룰. fefo(선 만료 선출법), lpr(공간 최적화 할당)',
-  })
+  // 재고할당전략
+  @Column()
   method!: StockAllocationMethod | string;
 
-  @Column({
-    type: 'enum',
-    enum: ZoneFilter,
-    name: 'zone_filter',
-    nullable: false,
-    comment: '존 포함 제외. include (포함), exclude(제외)',
-  })
+  // 존 포함 또는 제외 판단
+  @Column()
   zoneFilter!: ZoneFilter | string;
 
-  @Column('tinyint', {
-    name: 'is_default',
-    nullable: false,
-    comment: '기본 창고 여부',
-  })
-  isDefault!: number;
+  // 기본 창고 여부
+  @Column()
+  isDefault!: boolean;
 
   @OneToMany(
     () => StockAllocationRuleShop,

@@ -24,6 +24,6 @@
     "NOT_EXIST": "존재하지 않는 [$t(error.fields.{message})] 입니다.",
     "ALREADY_EXIST": "[$t(error.fields.{message})] 이(가) 이미 존재합니다.",
     "NOT_EXIST_FOR_MOVING": "이동 가능한 [$t(error.fields.{message})] 이(가) 존재하지 않습니다.",
-    "NOT_ENOUGH": "이동 가능한 재고 수량이 부족합니다."
+    "NOT_ENOUGH": "재고 수량이 부족합니다."
   }
 }

@@ -13,7 +13,7 @@ import { Supplier } from 'src/modules/supplier/entities/supplier.entity';
 import { TransactionItem } from 'src/modules/transaction-item/entities/transaction-item.entity';
 import { StockAllocated } from 'src/modules/stock-allocated/entities/stock-allocated.entity';
 
-@Entity({ name: 'lot' })
+@Entity()
 export class Lot {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -22,7 +22,7 @@ export class Lot {
   @JoinColumn({ name: 'item_id' })
   item!: Relation<Item>;
 
-  @Column({ name: 'item_id' })
+  @Column()
   itemId!: number;
 
   @ManyToOne(() => Supplier, (supplier) => supplier.lots, {
@@ -32,27 +32,16 @@ export class Lot {
   @JoinColumn({ name: 'supplier_id' })
   supplier!: Relation<Supplier>;
 
-  @Column({
-    name: 'supplier_id',
-    nullable: false,
-    comment: '(FK) 공급처 일련번호',
-  })
+  // (FK) 공급처 일련번호
+  @Column()
   supplierId!: number;
 
-  @Column('varchar', {
-    name: 'number',
-    length: 50,
-    nullable: false,
-    comment: '로트 넘버',
-  })
+  // 로트번호
+  @Column({ length: 50 })
   number!: string;
 
-  @Column({
-    type: 'date',
-    name: 'expiration_date',
-    nullable: true,
-    comment: '유통기한',
-  })
+  // 유통기한
+  @Column({ type: 'date', nullable: true })
   expirationDate?: Date | null = null;
 
   @OneToMany(() => InventoryItem, (inventoryItem) => inventoryItem.lot)
@@ -61,9 +50,6 @@ export class Lot {
   @OneToMany(() => TransactionItem, (transactionItem) => transactionItem.lot)
   transactions!: Relation<TransactionItem>[];
 
-  @OneToMany(
-    () => StockAllocated,
-    (stockAllStockAllocated) => stockAllStockAllocated.lot,
-  )
+  @OneToMany(() => StockAllocated, (stockAllocated) => stockAllocated.lot)
   stockAllocations!: Relation<StockAllocated>[];
 }

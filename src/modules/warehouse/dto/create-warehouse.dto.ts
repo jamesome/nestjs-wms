@@ -38,5 +38,5 @@ export class CreateWarehouseDto {
   contact?: string;
 
   @IsOptional()
-  isDefault?: number;
+  isDefault?: boolean;
 }

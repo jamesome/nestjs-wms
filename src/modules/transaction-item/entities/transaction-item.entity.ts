@@ -17,7 +17,7 @@ import {
   Relation,
 } from 'typeorm';
 
-@Entity('transaction_item')
+@Entity()
 export class TransactionItem {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -26,22 +26,14 @@ export class TransactionItem {
   @JoinColumn({ name: 'transaction_id' })
   transaction!: Relation<Transaction>;
 
-  @Column({
-    name: 'transaction_id',
-    nullable: false,
-    comment: '(FK) 품목 일련번호',
-  })
+  @Column()
   transactionId!: number;
 
   @ManyToOne(() => Item, (item) => item.transactionItems)
   @JoinColumn({ name: 'item_id' })
   item!: Relation<Item>;
 
-  @Column({
-    name: 'item_id',
-    nullable: false,
-    comment: '(FK) 품목 일련번호',
-  })
+  @Column()
   itemId!: number;
 
   @ManyToOne(
@@ -51,11 +43,8 @@ export class TransactionItem {
   @JoinColumn({ name: 'location_departure_id' })
   locationDeparture!: Relation<Location>;
 
-  @Column('int', {
-    name: 'location_departure_id',
-    nullable: true,
-    comment: '(FK) 출발 location',
-  })
+  // (FK) 출발 location
+  @Column({ type: 'int', nullable: true })
   locationDepartureId?: number | null;
 
   @ManyToOne(
@@ -65,86 +54,53 @@ export class TransactionItem {
   @JoinColumn({ name: 'location_arrival_id' })
   locationArrival!: Relation<Location>;
 
-  @Column('int', {
-    name: 'location_arrival_id',
-    nullable: true,
-    comment: '(FK) 도착 location',
-  })
+  // (FK) 도착 location
+  @Column({ type: 'int', nullable: true })
   locationArrivalId?: number | null;
 
   @ManyToOne(() => Lot, (lot) => lot.transactions)
   @JoinColumn({ name: 'lot_id' })
   lot!: Relation<Lot>;
 
-  @Column('int', {
-    name: 'lot_id',
-    nullable: true,
-    comment: '(FK) Lot 일련번호',
-  })
+  // (FK) Lot 일련번호
+  @Column({ type: 'int', nullable: true })
   lotId?: number | null;
 
   @ManyToOne(() => Supplier, (supplier) => supplier.transactions)
   @JoinColumn({ name: 'supplier_id' })
   supplier!: Relation<Supplier>;
 
-  @Column({
-    name: 'supplier_id',
-    nullable: true,
-    comment: '(FK) 공급처 일련번호',
-  })
+  @Column({ type: 'int', nullable: true })
   supplierId?: number | null;
 
   @ManyToOne(() => OperationType, (operationType) => operationType.transactions)
   @JoinColumn({ name: 'operation_type_id' })
   operationType!: Relation<OperationType>;
 
-  @Column('int', {
-    name: 'operation_type_id',
-    nullable: true,
-    comment: '재고작업구분 일련번호',
-  })
+  // 재고작업구분 일련번호
+  @Column({ type: 'int', nullable: true })
   operationTypeId?: number | null;
 
-  @Column('int', {
-    name: 'ordered_quantity',
-    nullable: false,
-    comment: '입고, 이동 된 수량 및 출고지시 된 수량',
-  })
+  // 입고, 이동 된 수량 및 출고지시 된 수량
+  @Column()
   orderedQuantity!: number;
-
-  @Column('int', {
-    name: 'picked_quantity',
-    nullable: false,
-    comment: '피킹지시 된 수량',
-    default: 0,
-  })
-  pickedQuantity?: number;
 
   // javascript의 number 타입으로 bigint 표현 시 문자열로 변환되는 경우
   @Column({
     type: 'bigint',
-    transformer: new StringToBigIntTransformer(),
-    name: 'price',
     nullable: true,
-    comment: '가격',
+    transformer: new StringToBigIntTransformer(),
   })
   price?: number | null;
 
-  @Column({
-    type: 'enum',
-    enum: SlipStatus,
-    name: 'status',
-    nullable: false,
-    comment: '재고상태. normal => 정상, abnormal => 비정상, disposed => 폐기',
-  })
+  @Column()
   status!: SlipStatus;
 
-  @Column('text', {
-    name: 'remark',
-    nullable: true,
-    comment: '비고',
-  })
+  @Column()
   remark?: string;
+
+  @Column({ length: 500 })
+  imageUrl?: string;
 
   @OneToMany(
     () => StockAllocated,

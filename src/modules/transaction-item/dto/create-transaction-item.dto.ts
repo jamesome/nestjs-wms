@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, Max, Min } from 'class-validator';
 import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
 import { SlipStatus } from 'src/modules/enum';
 
@@ -29,11 +29,6 @@ export class CreateTransactionItemDto {
   @I18nValidate(Min, 1)
   orderedQuantity!: number;
 
-  @IsOptional()
-  @I18nValidate(IsInt)
-  @I18nValidate(Min, 1)
-  pickedQuantity?: number;
-
   @I18nValidate(IsInt)
   price!: number | null;
 
@@ -44,4 +39,8 @@ export class CreateTransactionItemDto {
 
   @IsOptional()
   remark?: string;
+
+  @IsOptional()
+  @I18nValidate(Max, 500)
+  imageUrl?: string;
 }

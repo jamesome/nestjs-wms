@@ -10,25 +10,15 @@ import {
   Relation,
 } from 'typeorm';
 
-@Entity({ name: 'wave' })
+@Entity()
 export class Wave extends TimestampedEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column('int', {
-    name: 'sequence',
-    nullable: false,
-    comment: '차수',
-  })
+  @Column()
   sequence!: number;
 
-  @Column('varchar', {
-    name: 'name',
-    length: 50,
-    // unique: true,
-    nullable: false,
-    comment: '웨이브명',
-  })
+  @Column({ length: 50 })
   name!: string;
 
   @Column({
@@ -40,12 +30,9 @@ export class Wave extends TimestampedEntity {
   })
   status!: WaveStatus;
 
+  // 창고 등록 작업자
   // TODO: 추후, User로 대체
-  @Column('varchar', {
-    name: 'create_worker',
-    length: 50,
-    comment: '창고 등록 작업자',
-  })
+  @Column({ length: 50 })
   createWorker?: string;
 
   @OneToMany(() => WaveTransaction, (waveTransaction) => waveTransaction.wave)

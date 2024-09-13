@@ -13,7 +13,7 @@ import { Warehouse } from 'src/modules/warehouse/entities/warehouse.entity';
 import { Location } from 'src/modules/location/entities/location.entity';
 import { StockAllocationRuleZone } from 'src/modules/stock-allocation-rule-zone/entities/stock-allocation-rule-zone.entity';
 
-@Entity({ name: 'zone' })
+@Entity()
 @Unique(['name', 'code'])
 export class Zone extends TimestampedEntity {
   @PrimaryGeneratedColumn()
@@ -23,25 +23,13 @@ export class Zone extends TimestampedEntity {
   @JoinColumn({ name: 'warehouse_id' })
   warehouse!: Relation<Warehouse>;
 
-  @Column({ name: 'warehouse_id' })
+  @Column()
   warehouseId!: number;
 
-  @Column('varchar', {
-    name: 'name',
-    length: 100,
-    unique: true,
-    nullable: false,
-    comment: '분류명',
-  })
+  @Column({ length: 100, unique: true })
   name!: string;
 
-  @Column('varchar', {
-    name: 'code',
-    length: 100,
-    unique: true,
-    nullable: true,
-    comment: '분류코드',
-  })
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
   code?: string | null;
 
   @OneToMany(() => Location, (location) => location.zone, {

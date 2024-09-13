@@ -8,19 +8,19 @@ import {
 import { Transaction } from 'src/modules/transaction/entities/transaction.entity';
 import { Wave } from 'src/modules/wave/entities/wave.entity';
 
-@Entity({ name: 'wave_transaction' })
+@Entity()
 export class WaveTransaction {
   @ManyToOne(() => Wave, (wave) => wave.waveTransactions)
   @JoinColumn({ name: 'wave_id' })
   wave!: Relation<Wave>;
 
-  @PrimaryColumn({ name: 'wave_id' })
+  @PrimaryColumn()
   waveId!: number;
 
   @ManyToOne(() => Transaction, (transaction) => transaction.waveTransactions)
   @JoinColumn({ name: 'transaction_id' })
   transaction!: Relation<Transaction>;
 
-  @PrimaryColumn({ name: 'transaction_id' })
+  @PrimaryColumn()
   transactionId!: number;
 }

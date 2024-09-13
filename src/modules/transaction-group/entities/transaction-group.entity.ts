@@ -9,19 +9,13 @@ import {
   Unique,
 } from 'typeorm';
 
-@Entity('transaction_group')
+@Entity()
 @Unique(['transactionNumber'])
 export class TransactionGroup extends TimestampedEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column('varchar', {
-    name: 'transaction_number',
-    length: 50,
-    unique: true,
-    nullable: false,
-    comment: '전문번호(규칙에 따른 생성)',
-  })
+  @Column({ length: 50, unique: true })
   transactionNumber!: string;
 
   @OneToMany(() => Transaction, (transaction) => transaction.transactionGroup)

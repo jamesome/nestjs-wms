@@ -17,25 +17,17 @@ import { TransactionItem } from 'src/modules/transaction-item/entities/transacti
 import { Shipper } from 'src/modules/shipper/entities/shipper.entity';
 import { StockAllocated } from 'src/modules/stock-allocated/entities/stock-allocated.entity';
 
-@Entity({ name: 'item' })
+@Entity()
 export class Item extends TimestampedEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column('varchar', {
-    name: 'name',
-    length: 200,
-    nullable: false,
-    comment: '품목명',
-  })
+  // 품목명
+  @Column({ length: 200 })
   name!: string;
 
-  @Column('varchar', {
-    name: 'property',
-    length: 200,
-    nullable: false,
-    comment: '품목속성 (셀메이트 옵션명)',
-  })
+  // 품목속성 (셀메이트 옵션명)
+  @Column({ length: 200 })
   property?: string;
 
   @OneToMany(() => ItemCode, (itemCode) => itemCode.item, {
@@ -59,14 +51,11 @@ export class Item extends TimestampedEntity {
   @OneToMany(() => Lot, (lot) => lot.item)
   lots!: Relation<Lot>[];
 
-  @ManyToOne(() => Shipper, (shipper) => shipper.items, {
-    // eager: true,
-    // cascade: true,
-  })
+  @ManyToOne(() => Shipper, (shipper) => shipper.items)
   @JoinColumn({ name: 'shipper_id' })
   shipper!: Relation<Shipper>;
 
-  @Column({ name: 'shipper_id' })
+  @Column()
   shipperId!: number;
 
   @OneToMany(() => TransactionItem, (transactionItem) => transactionItem.item)

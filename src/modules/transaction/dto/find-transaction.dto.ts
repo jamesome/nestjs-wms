@@ -2,7 +2,7 @@ import { PartialType } from '@nestjs/swagger';
 import { CreateTransactionDto } from './create-transaction.dto';
 import { IsOptional, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Category, InputType, SlipStatus } from 'src/modules/enum';
+import { Category, SlipStatus } from 'src/modules/enum';
 import { I18nValidate } from 'src/common/decorators/validations/i18n-validate.decorator';
 import { TransformStringToNumber } from 'src/common/decorators/transform-string-to-number';
 import { MaxDateRange } from 'src/common/decorators/validations/max-date-range.decorator';
@@ -21,10 +21,7 @@ export class FindTransactionDto extends PartialType(CreateTransactionDto) {
   endDate!: Date;
 
   @IsOptional()
-  inputType?: InputType;
-
-  @IsOptional()
-  status?: SlipStatus | SlipStatus[];
+  statuses?: SlipStatus[];
 
   @IsOptional()
   category?: Category;

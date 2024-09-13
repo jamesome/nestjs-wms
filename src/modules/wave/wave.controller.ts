@@ -36,7 +36,7 @@ export class WaveController {
   ) {
     // 출고이면서, 할당완료 상태만 wave 생성가능.
     findTransactionDto.category = Category.SHIPPING;
-    findTransactionDto.status = [SlipStatus.ALLOCATED];
+    findTransactionDto.status = SlipStatus.ALLOCATED;
 
     const transactions =
       await this.transactionService.getManyShippingList(findTransactionDto);

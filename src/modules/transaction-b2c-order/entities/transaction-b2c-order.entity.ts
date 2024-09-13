@@ -10,7 +10,7 @@ import {
   Relation,
 } from 'typeorm';
 
-@Entity('transaction_b2c_order')
+@Entity()
 export class TransactionB2cOrder {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -19,76 +19,38 @@ export class TransactionB2cOrder {
   @JoinColumn({ name: 'transaction_id' })
   transaction!: Relation<Transaction>;
 
-  @Column({
-    name: 'transaction_id',
-    nullable: false,
-    comment: '(FK) 트랜잭션 일련번호',
-  })
+  @Column()
   transactionId!: number;
 
-  @Column('varchar', {
-    name: 'number',
-    length: 200,
-    comment: '판매처 주문번호',
-  })
+  // 판매처 주문번호
+  @Column({ length: 200 })
   number?: string;
 
   @ManyToOne(() => Shop, (shop) => shop.transactionB2cOrders)
   @JoinColumn({ name: 'shop_id' })
   shop!: Relation<Shop>;
 
-  @Column({
-    name: 'shop_id',
-    comment: '(FK) 판매처 일련번호',
-  })
+  @Column()
   shopId!: number;
 
-  @Column('varchar', {
-    name: 'recipient',
-    length: 100,
-    comment: '수령자명',
-  })
+  @Column({ length: 100 })
   recipient?: string;
 
-  @Column('varchar', {
-    name: 'contact',
-    length: 20,
-    comment: '연락처 HP ?? TEL',
-  })
+  @Column({ length: 20 })
   contact?: string;
 
-  @Column('varchar', {
-    name: 'post_code',
-    length: 6,
-    comment: '우편번호',
-  })
+  @Column({ length: 6 })
   postCode?: string;
 
-  @Column('varchar', {
-    name: 'address',
-    length: 500,
-    comment: '주소',
-  })
+  @Column({ length: 500 })
   address?: string;
 
-  @Column('varchar', {
-    name: 'detail_address',
-    length: 500,
-    comment: '상세주소',
-  })
+  @Column({ length: 500 })
   detailAddress?: string;
 
-  @Column('varchar', {
-    name: 'invoice_number',
-    length: 30,
-    comment: '송장번호',
-  })
+  @Column({ length: 30 })
   invoiceNumber?: string;
 
-  @Column({
-    type: 'date',
-    name: 'ordered_at',
-    comment: '주문일자',
-  })
+  @Column()
   orderedAt?: Date;
 }

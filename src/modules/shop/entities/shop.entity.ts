@@ -8,17 +8,12 @@ import {
 import { StockAllocationRuleShop } from 'src/modules/stock-allocation-rule-shop/entities/stock-allocation-rule-shop.entity';
 import { TransactionB2cOrder } from 'src/modules/transaction-b2c-order/entities/transaction-b2c-order.entity';
 
-@Entity({ name: 'shop' })
+@Entity()
 export class Shop {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column('varchar', {
-    name: 'name',
-    length: 50,
-    nullable: false,
-    comment: '판매처명',
-  })
+  @Column({ length: 50 })
   name!: string;
 
   @OneToMany(
